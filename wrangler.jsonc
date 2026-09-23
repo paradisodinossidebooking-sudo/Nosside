@@ -1,0 +1,10 @@
+{
+  "name": "nosside",
+  "compatibility_date": "2026-09-21",
+
+  "assets": {
+    "directory": "."
+  },
+
+  "previews": {}
+}
