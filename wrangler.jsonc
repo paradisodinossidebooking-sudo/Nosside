@@ -14,7 +14,8 @@
       "GOOGLE_CALENDAR_ID_BILOCALE": "d62e85ed52815bd8ebb4e937e0851f08ae699dbff824e22454ce5d1a53636054@group.calendar.google.com",
       "GOOGLE_CALENDAR_ID_TRILOCALE": "paradisodinossidebooking@gmail.com",
       "MAIL_FROM": "Paradiso di Nosside <booking@paradisodinosside.com>",
-      "MAIL_TO": "paradisodinossidebooking@gmail.com"
+      "MAIL_TO": "paradisodinossidebooking@gmail.com",
+      "GOOGLE_SERVICE_ACCOUNT_EMAIL": "paradiso-nosside-calendar@paradiso-di-nosside.iam.gserviceaccount.com"
     }
   }
 }
