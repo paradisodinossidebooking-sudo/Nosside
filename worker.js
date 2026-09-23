@@ -16,11 +16,14 @@ export default {
       // Tutto il resto = sito statico
       return env.ASSETS.fetch(request);
 
-    } catch (error) {
-      console.error(error);
-
+        } catch (error) {
+      console.error("WORKER ERROR:", error);
+    
       return json(
-        { error: "Errore interno del server." },
+        {
+          error: "Errore interno del server.",
+          debug: error?.message || String(error)
+        },
         500
       );
     }
