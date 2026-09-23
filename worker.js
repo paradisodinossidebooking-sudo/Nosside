@@ -295,14 +295,17 @@ async function sendQuote(request, env) {
 
 async function getGoogleToken(env) {
 
-  if (
-    !env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
-    !env.GOOGLE_PRIVATE_KEY
-  ) {
-    throw new Error(
-      "Credenziali Google non configurate"
-    );
-  }
+  if (!env.GOOGLE_SERVICE_ACCOUNT_EMAIL) {
+  throw new Error(
+    "Manca GOOGLE_SERVICE_ACCOUNT_EMAIL"
+  );
+}
+
+if (!env.GOOGLE_PRIVATE_KEY) {
+  throw new Error(
+    "Manca GOOGLE_PRIVATE_KEY"
+  );
+}
 
 
   const now =
