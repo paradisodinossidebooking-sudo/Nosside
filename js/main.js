@@ -99,11 +99,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeSuccessModal() {
-    if (!successModal) return;
-    successModal.classList.remove('is-open');
-    successModal.setAttribute('aria-hidden', 'true');
-    // Il popup disponibilità resta aperto dietro alla conferma.
-    if (!modal.classList.contains('is-open')) document.body.classList.remove('modal-open');
+    if (successModal) {
+      successModal.classList.remove('is-open');
+      successModal.setAttribute('aria-hidden', 'true');
+    }
+
+    // Dopo la conferma chiude l'intero flusso: popup successo,
+    // disponibilità/prenotazione ed eventuale galleria ancora aperta.
+    if (modal) {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    $$('.gallery-modal.is-open, .gallery-lightbox.is-open').forEach(el => {
+      el.classList.remove('is-open');
+      el.setAttribute('aria-hidden', 'true');
+    });
+    document.body.classList.remove('modal-open');
   }
 
   function openModal() {

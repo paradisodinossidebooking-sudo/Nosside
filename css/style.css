@@ -857,3 +857,10 @@ body{background:var(--warm)}
 #quote-form .privacy-check * {
   text-align: left !important;
 }
+
+
+/* ===== Rifinitura consenso privacy ===== */
+#quote-form .privacy-check {
+  margin: 22px 0 26px 0 !important;
+  padding: 4px 0 !important;
+}
