@@ -757,3 +757,24 @@ body{background:var(--warm)}
     padding:1rem 1.25rem;
   }
 }
+
+/* v10 — card appartamenti ripristinate con allineamento originale */
+#apartment-step .booking-apartment-card,
+#apartment-step .booking-card-body {
+  text-align: left;
+}
+
+/* Booking popup: centra correttamente titolo e testo introduttivo */
+#apartment-step > #booking-title {
+  width: 100%;
+  max-width: none;
+  margin: .25rem auto .65rem;
+  text-align: center;
+}
+
+#apartment-step > .booking-intro {
+  width: 100%;
+  max-width: none;
+  margin: 8px auto 26px;
+  text-align: center;
+}
