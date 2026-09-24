@@ -27,19 +27,6 @@
   --line-strong: rgba(43, 38, 32, 0.3);
 }
 
-#booking-check,
-#quote-form button[type="submit"] {
-  color: #fff !important;
-}
-
-.booking-consent,
-.booking-consent label,
-#quote-form .consent,
-#quote-form .consent label {
-  text-align: left !important;
-  justify-content: flex-start !important;
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --cream: #1c1912;
@@ -811,4 +798,18 @@ body{background:var(--warm)}
   .calendar-months-window{grid-template-columns:1fr}
   .availability-calendars .mini-calendar:nth-child(n+2){display:block!important}
   .calendar-window-label{font-size:.78rem}
+}
+
+/* v12 — leggibilità pulsanti e consenso privacy */
+#booking-check,
+#quote-form button[type="submit"] {
+  color: #fff !important;
+}
+
+.booking-consent,
+.booking-consent label,
+#quote-form .consent,
+#quote-form .consent label {
+  text-align: left !important;
+  justify-content: flex-start !important;
 }
