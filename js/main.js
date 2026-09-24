@@ -101,7 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
     apartment.value = value;
     guests.max = value === 'bilocale' ? 4 : 6;
     if (+guests.value > +guests.max) guests.value = guests.max;
-    $('#selected-apartment-title').textContent = value === 'bilocale' ? 'Bilocale · max 4 persone' : 'Trilocale · max 6 persone';
+    $('#selected-apartment-title').textContent = value === 'bilocale' ? 'Disponibilità — Bilocale' : 'Disponibilità — Trilocale';
+    const selectedImg = $('#selected-apartment-image');
+    const selectedName = $('#selected-apartment-name');
+    const selectedMeta = $('#selected-apartment-meta');
+    if (selectedImg) selectedImg.src = value === 'bilocale' ? 'images/bilocale-soggiorno-vista.jpg' : 'images/trilocale-soggiorno.jpg';
+    if (selectedName) selectedName.textContent = value === 'bilocale' ? 'Bilocale' : 'Trilocale';
+    if (selectedMeta) selectedMeta.textContent = value === 'bilocale' ? 'Fino a 4 persone' : 'Fino a 6 persone';
     apartmentStep.classList.add('is-hidden');
     calendarStep.classList.remove('is-hidden');
     quoteForm.classList.add('is-hidden');
@@ -120,9 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
     error.classList.add('is-hidden');
     holder.innerHTML = '';
     try {
-      const r = await fetch('/api/availability?apartment=' + encodeURIComponent(value) + '&view=calendar&months=3');
+      const r = await fetch('/api/availability?apartment=' + encodeURIComponent(value) + '&view=calendar&months=3', {
+        headers: { 'accept': 'application/json' },
+        cache: 'no-store'
+      });
+      const contentType = r.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('La rotta API non è attiva su questo deployment. Esegui nuovamente il deploy dello staging.');
+      }
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Impossibile caricare il calendario.');
+      if (!r.ok) throw new Error(data.error || data.debug || 'Impossibile caricare il calendario.');
       state.busy = Array.isArray(data.busy) ? data.busy : [];
       state.rangeStart = data.rangeStart;
       state.rangeEnd = data.rangeEnd;
@@ -191,3 +204,48 @@ function setStatus(el, msg, type) {
   el.textContent = msg;
   el.className = 'form-status' + (type ? ' ' + type : '');
 }
+
+// Galleria appartamenti
+(() => {
+  const galleryData = {
+    bilocale: {
+      title: 'Bilocale',
+      description: 'Luminoso, accogliente e ideale per coppie o piccole famiglie.',
+      images: [
+        ['images/bilocale-soggiorno-vista.jpg','Soggiorno con vista'],
+        ['images/bilocale-soggiorno.jpg','Soggiorno'],
+        ['images/bilocale-cucina.jpg','Cucina'],
+        ['images/bilocale-camera.jpg','Camera'],
+        ['images/bilocale-bagno.jpg','Bagno']
+      ]
+    },
+    trilocale: {
+      title: 'Trilocale',
+      description: 'Più spazio per famiglie e gruppi, con ambienti comodi e curati.',
+      images: [
+        ['images/trilocale-soggiorno.jpg','Soggiorno'],
+        ['images/trilocale-salotto.jpg','Salotto'],
+        ['images/trilocale-cucina.jpg','Cucina'],
+        ['images/trilocale-camera.jpg','Camera'],
+        ['images/trilocale-bagno.jpg','Bagno']
+      ]
+    }
+  };
+  const modal = document.querySelector('#gallery-modal');
+  if (!modal) return;
+  const grid = document.querySelector('#gallery-grid');
+  const title = document.querySelector('#gallery-title');
+  const description = document.querySelector('#gallery-description');
+  const close = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); };
+  document.querySelectorAll('[data-open-gallery]').forEach(btn => btn.addEventListener('click', () => {
+    const data = galleryData[btn.dataset.openGallery];
+    title.textContent = data.title; description.textContent = data.description;
+    grid.innerHTML = data.images.map(([src,alt]) => `<figure class="gallery-item"><img src="${src}" alt="${alt} — ${data.title}" loading="lazy"><figcaption>${alt}</figcaption></figure>`).join('');
+    modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open');
+  }));
+  document.querySelectorAll('[data-close-gallery]').forEach(btn => btn.addEventListener('click', close));
+  document.querySelectorAll('[data-gallery-book]').forEach(btn => btn.addEventListener('click', () => {
+    close(); document.querySelector('[data-open-booking]').click();
+  }));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
+})();

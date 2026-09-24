@@ -620,3 +620,140 @@ body.modal-open { overflow:hidden; }
   .booking-date-grid label:last-child,.quote-grid .wide { grid-column:auto; }
   .booking-apartment-card img { aspect-ratio:2/1; }
 }
+
+/* ===== Premium redesign v4 ===== */
+:root{--forest:#075e59;--forest-dark:#034945;--warm:#f7f2e7;--warm-card:#fffdf8;--terracotta:#d46f43}
+body{background:var(--warm)}
+.nav-premium{position:absolute;top:0;left:0;right:0;background:transparent;border:0;color:white;backdrop-filter:none;z-index:30}.nav-premium .nav-inner{max-width:1240px;margin:auto;padding:22px 34px}.brand-logo-only img{width:92px;height:auto;filter:brightness(0) invert(1);drop-shadow:0 2px 12px rgba(0,0,0,.25)}.premium-links{margin-left:auto;margin-right:24px}.premium-links a{color:white!important;border:0!important;font-weight:500;text-shadow:0 1px 8px rgba(0,0,0,.35)}.nav-book,.hero-book{border:1px solid rgba(255,255,255,.75);background:var(--forest);color:#fff;border-radius:999px;padding:13px 20px;font:600 14px 'IBM Plex Sans';cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.18)}.nav-book span{margin-left:8px}.hero-premium{height:min(680px,82vh);min-height:570px;position:relative;overflow:hidden;color:#fff;background:#164c55}.hero-premium-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.hero-premium-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,28,35,.66) 0%,rgba(0,30,35,.36) 45%,rgba(0,0,0,.12) 72%),linear-gradient(0deg,rgba(0,0,0,.5),transparent 42%)}.hero-premium-content{position:relative;z-index:2;padding-top:180px;max-width:1240px}.hero-place{font-size:.76rem;letter-spacing:.17em;text-transform:uppercase;font-weight:600;margin:0 0 18px}.hero-premium h1{color:#fff;font-size:clamp(3rem,6vw,5.6rem);line-height:.96;letter-spacing:-.035em;max-width:850px;text-shadow:0 2px 18px rgba(0,0,0,.22)}.hero-premium-content>p:not(.hero-place){font-size:clamp(1.05rem,1.8vw,1.3rem);margin:20px 0 30px}.hero-premium-actions{display:flex;align-items:center;gap:24px}.hero-premium-actions a{color:#fff;text-underline-offset:5px;font-weight:500}.hero-book{font-size:1rem;padding:16px 24px}.hero-book b{margin-left:10px}.calendar-icon{margin-right:7px}.hero-benefits{position:absolute;z-index:3;left:0;right:0;bottom:24px;max-width:1240px;display:flex;justify-content:space-between;gap:18px;font-size:.9rem}.hero-benefits span{display:flex;align-items:center;gap:7px;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.wrap{max-width:1180px}.section-head h2{font-size:clamp(2.2rem,4vw,3.4rem)}.plate,.apartment,.contact-card,.feature{border-radius:16px}.plate img,.apartment img{border-radius:16px 16px 0 0}
+.booking-dialog{width:min(1180px,94vw);max-height:92vh;background:var(--warm-card);border-radius:18px;box-shadow:0 30px 100px rgba(0,0,0,.32);padding:34px 38px}.booking-modal-backdrop{background:rgba(10,22,20,.62);backdrop-filter:blur(8px)}.booking-close{top:18px;right:20px;border:0;background:transparent;font-size:32px}.modal-logo{text-align:center;margin:-8px auto 6px}.modal-logo img{width:88px}.modal-logo-small{position:absolute;top:22px;left:50%;transform:translateX(-50%);margin:0}.modal-logo-small img{width:66px}.step-label{text-align:center;font-size:.78rem;color:var(--ink-soft);margin:4px 0 8px}.step-label b{display:inline-grid;place-items:center;width:22px;height:22px;background:var(--forest);color:white;border-radius:50%;margin-right:6px}.booking-step>h2{text-align:center;font-size:clamp(2rem,4vw,3rem)}.booking-intro{text-align:center;margin:8px auto 26px;color:var(--ink-soft)}.booking-apartments{gap:22px;max-width:900px;margin:auto}.booking-apartment-card{border-radius:14px;overflow:hidden;background:white;border:1px solid rgba(43,38,32,.12);box-shadow:0 8px 25px rgba(36,29,18,.08);transition:.2s transform,.2s box-shadow;text-align:left}.booking-apartment-card:hover{transform:translateY(-4px);box-shadow:0 16px 38px rgba(36,29,18,.14);border-color:var(--forest)}.booking-apartment-card img{height:220px}.booking-card-body{padding:18px 20px}.booking-card-body strong{font-size:1.6rem}.booking-card-body em{color:var(--forest);font-weight:700}.booking-back{color:var(--forest);font-weight:600}.booking-selected-head{padding-top:42px}.booking-selected-head h2{font-size:2.5rem}.availability-legend .dot.available{background:#5fbf88}.availability-legend .dot.busy{background:#ef8a6b}.calendar-layout{display:grid;grid-template-columns:190px 1fr;gap:28px;align-items:start}.selected-apartment-aside{background:#f3eddf;border-radius:13px;padding:12px;display:flex;flex-direction:column;gap:7px}.selected-apartment-aside img{width:100%;height:112px;object-fit:cover;border-radius:9px}.selected-apartment-aside strong{font-family:'Fraunces';font-size:1.35rem}.selected-apartment-aside span{font-size:.78rem;color:var(--ink-soft)}.availability-calendars{grid-template-columns:repeat(3,1fr);gap:14px}.mini-calendar{background:transparent;border:0;padding:10px}.mini-calendar h3{text-align:center;font-size:1rem;text-transform:capitalize}.calendar-day{border-radius:6px}.calendar-day.available{background:#e6f3e8;color:#285d45}.calendar-day.busy{background:#fde5de;color:#c65436}.booking-form-modal{background:#f3eddf;border-radius:12px;padding:16px;margin-top:18px}.booking-date-grid{grid-template-columns:repeat(3,1fr)}.booking-check-button{background:var(--forest)!important}.quote-form{background:#f3eddf;border-radius:14px}.quote-form .btn{background:var(--forest)!important;width:100%}
+@media(max-width:760px){.nav-premium .nav-inner{padding:16px 18px}.brand-logo-only img{width:68px}.premium-links{display:none}.nav-book{font-size:.72rem;padding:10px 13px}.hero-premium{height:720px}.hero-premium-content{padding-top:165px}.hero-premium h1{font-size:3.2rem}.hero-premium-actions{align-items:flex-start;flex-direction:column}.hero-benefits{display:grid;grid-template-columns:1fr 1fr;bottom:22px;font-size:.78rem}.booking-dialog{padding:24px 16px;border-radius:18px 18px 0 0;width:100vw;max-height:94vh;align-self:end}.booking-apartments{grid-template-columns:1fr}.booking-apartment-card{display:grid;grid-template-columns:42% 1fr}.booking-apartment-card img{height:100%;min-height:170px}.calendar-layout{grid-template-columns:1fr}.selected-apartment-aside{display:grid;grid-template-columns:90px 1fr}.selected-apartment-aside img{grid-row:1/3;height:70px}.availability-calendars{grid-template-columns:1fr}.availability-calendars .mini-calendar:nth-child(n+2){display:none}.booking-date-grid{grid-template-columns:1fr 1fr}.booking-date-grid label:last-child{grid-column:1/-1}.modal-logo-small{display:none}.booking-selected-head{padding-top:8px}.hero-premium-bg{object-position:center}.hero-premium-shade{background:linear-gradient(90deg,rgba(0,28,35,.72),rgba(0,30,35,.28)),linear-gradient(0deg,rgba(0,0,0,.55),transparent 50%)}}
+
+/* === FE v5 refinements === */
+/* Keep the original brand artwork exactly as supplied: no recolouring/filtering. */
+.brand-logo-only{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 12px;
+  border-radius:14px;
+  background:rgba(255,250,239,.94);
+  box-shadow:0 10px 30px rgba(8,28,32,.16);
+  backdrop-filter:blur(10px);
+}
+.brand-logo-only img{
+  width:104px;
+  height:auto;
+  filter:none !important;
+  drop-shadow:none;
+}
+
+/* Give the photographic banner room to breathe before the next section. */
+.hero-premium{
+  margin-bottom:64px;
+  border-radius:0 0 28px 28px;
+  box-shadow:0 24px 60px rgba(23,47,48,.14);
+}
+
+/* Slightly more refined header / hero proportions. */
+.nav-premium .nav-inner{padding-top:18px;padding-bottom:18px}
+.hero-premium-content{padding-top:190px}
+.hero-premium h1{max-width:780px}
+.hero-premium-actions{margin-top:4px}
+.hero-book{padding:17px 26px;box-shadow:0 12px 32px rgba(4,64,62,.28)}
+
+/* More visual separation in the content immediately after the hero. */
+#appartamenti{scroll-margin-top:90px}
+
+@media(max-width:760px){
+  .brand-logo-only{padding:6px 9px;border-radius:11px}
+  .brand-logo-only img{width:76px}
+  .hero-premium{margin-bottom:38px;border-radius:0 0 20px 20px}
+  .hero-premium-content{padding-top:170px}
+}
+
+/* ===== FE v6 refinements ===== */
+.brand-logo-only{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;backdrop-filter:none!important}
+.brand-logo-only img{width:104px!important;height:auto!important;filter:none!important;drop-shadow:none!important;object-fit:contain}
+.hero-premium{height:min(650px,78vh);min-height:560px;margin-bottom:72px!important;background:#164c55}
+.hero-premium-bg{object-fit:cover;object-position:center 48%;filter:none;transform:none;image-rendering:auto}
+.hero-premium-content{padding-top:185px}
+.hero-premium h1{max-width:820px}
+.hero-premium-actions .btn-availability-large{min-width:270px;width:auto;background:var(--olive);color:#2b2410;border-radius:0;box-shadow:0 14px 35px rgba(0,0,0,.2)}
+.hero-premium-actions .btn-availability-large:hover{background:var(--olive-deep);color:#fff8ea}
+.host{grid-template-columns:150px minmax(0,1fr);gap:clamp(1.5rem,4vw,3rem);align-items:center}
+.host-avatar{width:150px;height:150px;aspect-ratio:1;border-radius:50%;overflow:hidden;justify-self:center}
+.host-avatar img{width:100%;height:100%;object-fit:cover;object-position:center 25%}
+.interiors-showcase{padding-top:clamp(3rem,7vw,5rem);padding-bottom:clamp(3rem,7vw,5rem)}
+.interior-apartment-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.interior-apartment-card{position:relative;min-height:520px;border:0;padding:0;overflow:hidden;cursor:pointer;background:#ddd;text-align:left;border-radius:4px;box-shadow:0 16px 42px rgba(31,42,38,.12)}
+.interior-apartment-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .55s ease}
+.interior-apartment-card:first-child img{object-position:center 30%}.interior-apartment-card:last-child img{object-position:center 38%}
+.interior-apartment-card:hover img{transform:scale(1.035)}
+.interior-card-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(13,39,38,.78),rgba(13,39,38,.02) 68%)}
+.interior-card-copy{position:absolute;left:30px;right:30px;bottom:28px;color:#fff;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.interior-card-copy small{text-transform:uppercase;letter-spacing:.16em;font-weight:700;font-size:.7rem}.interior-card-copy strong{font-family:'Fraunces';font-size:clamp(2.1rem,4vw,3.2rem);line-height:1}.interior-card-copy>span{opacity:.9}.interior-card-copy em{font-style:normal;font-weight:700;margin-top:12px;border-bottom:1px solid rgba(255,255,255,.65);padding-bottom:3px}
+.gallery-modal{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:24px}.gallery-modal.is-open{display:flex}.gallery-backdrop{position:absolute;inset:0;background:rgba(11,25,23,.72);backdrop-filter:blur(7px)}.gallery-dialog{position:relative;z-index:1;width:min(1120px,95vw);max-height:92vh;overflow:auto;background:var(--warm-card);padding:36px;border-radius:16px;box-shadow:0 30px 100px rgba(0,0,0,.34)}.gallery-close{position:absolute;right:20px;top:14px;border:0;background:transparent;font-size:34px;cursor:pointer}.gallery-head{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;padding:4px 30px 26px 0;border-bottom:1px solid var(--line)}.gallery-head h2{font-size:clamp(2.4rem,5vw,4rem);margin:.2rem 0}.gallery-head p:last-child{margin:0;color:var(--ink-soft)}.gallery-book{min-width:230px}.gallery-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;margin-top:24px}.gallery-item{margin:0;overflow:hidden;background:#eee;min-height:310px}.gallery-item:first-child{grid-row:span 2;min-height:634px}.gallery-item img{width:100%;height:100%;display:block;object-fit:cover}.gallery-item figcaption{display:none}.gallery-footer{display:none;text-align:center;padding-top:24px}
+@media(max-width:760px){.brand-logo-only img{width:78px!important}.hero-premium{height:680px;margin-bottom:44px!important}.hero-premium-content{padding-top:170px}.hero-premium h1{font-size:3rem}.hero-premium-actions .btn-availability-large{width:100%;min-width:0}.host{grid-template-columns:1fr}.host-avatar{width:112px;height:112px}.interior-apartment-grid{grid-template-columns:1fr;gap:16px}.interior-apartment-card{min-height:420px}.gallery-modal{padding:0;align-items:flex-end}.gallery-dialog{width:100vw;max-height:94vh;border-radius:18px 18px 0 0;padding:26px 16px}.gallery-head{display:block;padding-right:30px}.gallery-head .gallery-book{display:none}.gallery-grid{grid-template-columns:1fr 1fr;gap:8px}.gallery-item,.gallery-item:first-child{grid-row:auto;min-height:210px}.gallery-item:first-child{grid-column:1/-1;min-height:320px}.gallery-footer{display:block}.gallery-footer .btn{width:100%}}
+
+
+/* ===== FE v7 — availability CTA ===== */
+.hero-premium-actions .btn-availability-large,
+.nav-premium .nav-book.btn-availability-large{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  min-width:300px;
+  width:auto;
+  padding:18px 30px;
+  border:1.5px solid rgba(255,255,255,.92)!important;
+  border-radius:999px!important;
+  background:#b6a06f!important;
+  color:#fff!important;
+  font-size:1.08rem;
+  font-weight:700;
+  line-height:1;
+  box-shadow:0 10px 28px rgba(20,32,35,.18)!important;
+  transition:transform .2s ease,background .2s ease,box-shadow .2s ease;
+}
+.hero-premium-actions .btn-availability-large span,
+.nav-premium .nav-book.btn-availability-large span{
+  font-size:1.35em;
+  line-height:1;
+  font-weight:400;
+}
+.hero-premium-actions .btn-availability-large:hover,
+.nav-premium .nav-book.btn-availability-large:hover{
+  background:#a58e5d!important;
+  color:#fff!important;
+  transform:translateY(-2px);
+  box-shadow:0 14px 34px rgba(20,32,35,.24)!important;
+}
+@media(max-width:900px){
+  .nav-premium .nav-book.btn-availability-large{min-width:0;padding:13px 19px;font-size:.9rem;gap:10px}
+}
+@media(max-width:760px){
+  .hero-premium-actions .btn-availability-large{width:100%;min-width:0}
+}
+
+/* ===== FE v8 — availability CTA: original dimensions, v7 visual style ===== */
+.hero-premium-actions .btn-availability-large{
+  min-width:250px;
+  padding:1.15rem 1.5rem;
+  font-size:1.05rem;
+  gap:14px;
+}
+.nav-premium .nav-book.btn-availability-large{
+  min-width:0;
+  padding:12px 18px;
+  font-size:.9rem;
+  gap:10px;
+}
+@media(max-width:760px){
+  .hero-premium-actions .btn-availability-large{
+    width:100%;
+    min-width:0;
+    padding:1rem 1.25rem;
+  }
+}
