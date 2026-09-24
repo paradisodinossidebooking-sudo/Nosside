@@ -813,3 +813,32 @@ body{background:var(--warm)}
   text-align: left !important;
   justify-content: flex-start !important;
 }
+
+/* v13 — correzione definitiva pulsanti e consenso privacy */
+.booking-check-button,
+.booking-check-button:hover,
+.booking-check-button:focus,
+.booking-check-button:active,
+.quote-form .btn,
+.quote-form .btn:hover,
+.quote-form .btn:focus,
+.quote-form .btn:active {
+  color: #fff !important;
+}
+
+.quote-form .privacy-check {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  align-items: start !important;
+  justify-content: start !important;
+  gap: 10px !important;
+  width: 100% !important;
+  text-align: left !important;
+  flex-direction: unset !important;
+}
+
+.quote-form .privacy-check input {
+  width: auto !important;
+  margin: 3px 0 0 0 !important;
+  justify-self: start !important;
+}
