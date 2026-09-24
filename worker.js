@@ -5,75 +5,30 @@ export default {
     if (url.pathname === "/api/debug-calendar") {
       try {
         const apartment = url.searchParams.get("apartment") || "bilocale";
-
-        const calendarId =
-            apartment === "bilocale"
-                ? env.GOOGLE_CALENDAR_ID_BILOCALE
-                : env.GOOGLE_CALENDAR_ID_TRILOCALE;
+        const calendarId = apartment === "bilocale"
+          ? env.GOOGLE_CALENDAR_ID_BILOCALE
+          : env.GOOGLE_CALENDAR_ID_TRILOCALE;
 
         if (!calendarId) {
-          return json({
-            ok: false,
-            step: "calendar-id",
-            apartment,
-            error: "Calendar ID non configurato"
-          }, 500);
+          return json({ ok: false, step: "calendar-id", apartment, error: "Calendar ID non configurato" }, 500);
         }
 
         const token = await googleToken(env);
-
-        const now = new Date();
-        const timeMin = now.toISOString();
-
-        const end = new Date(now);
+        const start = startOfToday();
+        const end = new Date(start);
         end.setMonth(end.getMonth() + 6);
-        const timeMax = end.toISOString();
-
-        const googleResponse = await fetch(
-            "https://www.googleapis.com/calendar/v3/freeBusy",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                timeMin,
-                timeMax,
-                timeZone: "Europe/Rome",
-                items: [
-                  {
-                    id: calendarId
-                  }
-                ]
-              })
-            }
-        );
-
-        const googleData = await googleResponse.json();
+        const busy = await googleBusy(calendarId, token, start, end);
 
         return json({
-          ok: googleResponse.ok,
+          ok: true,
           apartment,
-
           calendarId,
-
-          googleStatus: googleResponse.status,
-
-          range: {
-            timeMin,
-            timeMax
-          },
-
-          googleResponse: googleData
+          range: { timeMin: start.toISOString(), timeMax: end.toISOString() },
+          busyCount: busy.length,
+          busy
         });
-
       } catch (error) {
-        return json({
-          ok: false,
-          step: "exception",
-          error: error?.message || String(error)
-        }, 500);
+        return json({ ok: false, step: "exception", error: error?.message || String(error) }, 500);
       }
     }
 
@@ -128,16 +83,49 @@ async function checkAvailability(request, env) {
 }
 
 async function googleBusy(calendarId, token, timeMin, timeMax) {
-  const r = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ timeMin: timeMin.toISOString(), timeMax: timeMax.toISOString(), timeZone: 'Europe/Rome', items: [{ id: calendarId }] })
-  });
-  const data = await r.json();
-  if (!r.ok) throw new Error('Google Calendar non raggiungibile');
-  const cal = data.calendars?.[calendarId];
-  if (cal?.errors?.length) throw new Error('Google Calendar: accesso al calendario non riuscito');
-  return cal?.busy || [];
+  // Google FreeBusy rifiuta intervalli troppo lunghi. Dividiamo quindi
+  // automaticamente la richiesta in blocchi da 60 giorni e uniamo i risultati.
+  const MAX_CHUNK_DAYS = 60;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const allBusy = [];
+
+  let chunkStart = new Date(timeMin);
+  const finalEnd = new Date(timeMax);
+
+  while (chunkStart < finalEnd) {
+    const chunkEnd = new Date(Math.min(
+      chunkStart.getTime() + MAX_CHUNK_DAYS * DAY_MS,
+      finalEnd.getTime()
+    ));
+
+    const r = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        timeMin: chunkStart.toISOString(),
+        timeMax: chunkEnd.toISOString(),
+        timeZone: 'Europe/Rome',
+        items: [{ id: calendarId }]
+      })
+    });
+
+    const data = await r.json();
+    if (!r.ok) {
+      console.error('GOOGLE FREEBUSY ERROR:', r.status, JSON.stringify(data));
+      throw new Error(`Google Calendar non raggiungibile (${r.status})`);
+    }
+
+    const cal = data.calendars?.[calendarId];
+    if (cal?.errors?.length) {
+      console.error('GOOGLE CALENDAR ERROR:', JSON.stringify(cal.errors));
+      throw new Error('Google Calendar: accesso al calendario non riuscito');
+    }
+
+    allBusy.push(...(cal?.busy || []));
+    chunkStart = chunkEnd;
+  }
+
+  return allBusy;
 }
 
 async function sendQuote(request, env) {
