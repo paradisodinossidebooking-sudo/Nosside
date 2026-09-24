@@ -2,6 +2,17 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (url.pathname === "/api/debug-env") {
+      return json({
+        worker: "nosside-debug-1",
+        bindings: Object.keys(env).sort(),
+        hasGooglePrivateKey: Boolean(env.GOOGLE_PRIVATE_KEY),
+        hasGoogleEmail: Boolean(env.GOOGLE_SERVICE_ACCOUNT_EMAIL),
+        hasBilocaleCalendar: Boolean(env.GOOGLE_CALENDAR_ID_BILOCALE),
+        hasTrilocaleCalendar: Boolean(env.GOOGLE_CALENDAR_ID_TRILOCALE)
+      });
+    }
+
     try {
       // API: verifica disponibilità
       if (url.pathname === "/api/availability" && request.method === "GET") {
