@@ -2,6 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
+      if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, worker: 'nosside-v3' });
       if (url.pathname === '/api/availability' && request.method === 'GET') return checkAvailability(request, env);
       if (url.pathname === '/api/quote' && request.method === 'POST') return sendQuote(request, env);
       return env.ASSETS.fetch(request);
