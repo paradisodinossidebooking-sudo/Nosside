@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkout = $('#checkout');
   const availabilityResult = $('#availability-result');
   const quoteResult = $('#quote-result');
+  const successModal = $('#request-success-modal');
   const today = localISO(new Date());
 
   checkin.min = today;
@@ -26,7 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
   $$('.booking-apartment-card').forEach(btn => btn.addEventListener('click', () => selectApartment(btn.dataset.apartment)));
   $('#booking-back').addEventListener('click', resetToApartments);
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (successModal?.classList.contains('is-open')) closeSuccessModal();
+    else if (modal.classList.contains('is-open')) closeModal();
+  });
+  $$('[data-close-success]').forEach(btn => btn.addEventListener('click', closeSuccessModal));
 
   checkin.addEventListener('change', () => {
     checkout.min = checkin.value || today;
@@ -76,12 +82,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = await fetch('/api/quote', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload) });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Invio non riuscito.');
-      setStatus(quoteResult, 'Richiesta inviata! Ti risponderemo il prima possibile.', 'ok');
+      setStatus(quoteResult, '', '');
+      openSuccessModal();
       quoteForm.querySelectorAll('input:not([type=hidden]), textarea').forEach(el => { if (el.type === 'checkbox') el.checked = false; else el.value = ''; });
     } catch (err) {
       setStatus(quoteResult, err.message || 'Invio non riuscito. Riprova.', 'error');
     }
   });
+
+  function openSuccessModal() {
+    if (!successModal) return;
+    successModal.classList.add('is-open');
+    successModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    setTimeout(() => successModal.querySelector('[data-close-success]')?.focus(), 50);
+  }
+
+  function closeSuccessModal() {
+    if (!successModal) return;
+    successModal.classList.remove('is-open');
+    successModal.setAttribute('aria-hidden', 'true');
+    // Il popup disponibilità resta aperto dietro alla conferma.
+    if (!modal.classList.contains('is-open')) document.body.classList.remove('modal-open');
+  }
 
   function openModal() {
     modal.classList.add('is-open');
