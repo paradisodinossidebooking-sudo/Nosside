@@ -1,6 +1,82 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/debug-calendar") {
+      try {
+        const apartment = url.searchParams.get("apartment") || "bilocale";
+
+        const calendarId =
+            apartment === "bilocale"
+                ? env.GOOGLE_CALENDAR_ID_BILOCALE
+                : env.GOOGLE_CALENDAR_ID_TRILOCALE;
+
+        if (!calendarId) {
+          return json({
+            ok: false,
+            step: "calendar-id",
+            apartment,
+            error: "Calendar ID non configurato"
+          }, 500);
+        }
+
+        const token = await getGoogleAccessToken(env);
+
+        const now = new Date();
+        const timeMin = now.toISOString();
+
+        const end = new Date(now);
+        end.setMonth(end.getMonth() + 6);
+        const timeMax = end.toISOString();
+
+        const googleResponse = await fetch(
+            "https://www.googleapis.com/calendar/v3/freeBusy",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                timeMin,
+                timeMax,
+                timeZone: "Europe/Rome",
+                items: [
+                  {
+                    id: calendarId
+                  }
+                ]
+              })
+            }
+        );
+
+        const googleData = await googleResponse.json();
+
+        return json({
+          ok: googleResponse.ok,
+          apartment,
+
+          calendarId,
+
+          googleStatus: googleResponse.status,
+
+          range: {
+            timeMin,
+            timeMax
+          },
+
+          googleResponse: googleData
+        });
+
+      } catch (error) {
+        return json({
+          ok: false,
+          step: "exception",
+          error: error?.message || String(error)
+        }, 500);
+      }
+    }
+
     try {
       if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, worker: 'nosside-v3' });
       if (url.pathname === '/api/availability' && request.method === 'GET') return checkAvailability(request, env);
