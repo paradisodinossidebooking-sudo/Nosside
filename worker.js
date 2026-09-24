@@ -20,7 +20,7 @@ export default {
           }, 500);
         }
 
-        const token = await getGoogleAccessToken(env);
+        const token = await googleToken(env);
 
         const now = new Date();
         const timeMin = now.toISOString();
