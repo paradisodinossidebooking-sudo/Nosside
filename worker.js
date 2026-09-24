@@ -33,7 +33,7 @@ async function checkAvailability(request, env) {
       apartment,
       rangeStart: dateOnly(start),
       rangeEnd: dateOnly(end),
-      busy: busy.map(period => ({ start: instantToRomeDate(period.start), end: instantToRomeDateCeil(period.end) }))
+      busy: busy.map(period => ({ start: instantToRomeDate(period.start), end: instantToRomeDateInclusiveEnd(period.end) }))
     });
   }
 
@@ -43,7 +43,10 @@ async function checkAvailability(request, env) {
 
   // Mezzanotte locale Europe/Rome convertita in UTC con Intl, evitando offset +01/+02 hard-coded.
   const timeMin = romeMidnightToUTC(checkin);
-  const timeMax = romeMidnightToUTC(checkout);
+  // Il checkout viene trattato come giorno occupato anche nella verifica finale,
+  // così preview e controllo disponibilità usano esattamente la stessa regola.
+  const checkoutNext = addRomeDays(checkout, 1);
+  const timeMax = romeMidnightToUTC(checkoutNext);
   const busy = await googleBusy(calendarId, token, timeMin, timeMax);
   return json({ available: busy.length === 0 });
 }
@@ -101,13 +104,20 @@ async function googleToken(env) {
 function startOfToday() { const n=new Date(); return romeMidnightToUTC(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(n)); }
 function dateOnly(d) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }
 function instantToRomeDate(s) { return dateOnly(new Date(s)); }
-function instantToRomeDateCeil(s) {
+function instantToRomeDateInclusiveEnd(s) {
   const d = new Date(s);
   const localDate = dateOnly(d);
   const midnight = romeMidnightToUTC(localDate);
-  // Se termina esattamente a mezzanotte, il giorno di checkout resta disponibile.
-  if (Math.abs(d.getTime() - midnight.getTime()) < 60000) return localDate;
-  const next = new Date(midnight); next.setUTCDate(next.getUTCDate()+1); return dateOnly(next);
+  // Google Calendar usa una fine esclusiva per gli eventi all-day.
+  // Per la preview del sito consideriamo invece occupato anche il giorno finale.
+  if (Math.abs(d.getTime() - midnight.getTime()) < 60000) return addRomeDays(localDate, 1);
+  return addRomeDays(localDate, 1);
+}
+function addRomeDays(ymd, days) {
+  const [y,m,d] = ymd.split('-').map(Number);
+  const x = new Date(Date.UTC(y,m-1,d));
+  x.setUTCDate(x.getUTCDate() + days);
+  return `${x.getUTCFullYear()}-${String(x.getUTCMonth()+1).padStart(2,'0')}-${String(x.getUTCDate()).padStart(2,'0')}`;
 }
 function romeMidnightToUTC(ymd) {
   const [y,m,d] = ymd.split('-').map(Number);

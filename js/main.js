@@ -192,7 +192,9 @@ function dateIsBusy(date, busy) {
   return busy.some(period => date >= period.start && date < period.end);
 }
 function rangeTouchesBusy(start, end, busy) {
-  return busy.some(period => start < period.end && end > period.start);
+  // Gli intervalli ricevuti dal Worker hanno `end` esclusivo ma includono
+  // già il giorno finale occupato. Stessa regola usata dalla preview.
+  return busy.some(period => start < period.end && end >= period.start);
 }
 function localISO(date) {
   const y = date.getFullYear();
