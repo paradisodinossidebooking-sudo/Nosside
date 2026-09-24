@@ -800,45 +800,60 @@ body{background:var(--warm)}
   .calendar-window-label{font-size:.78rem}
 }
 
-/* v12 — leggibilità pulsanti e consenso privacy */
-#booking-check,
-#quote-form button[type="submit"] {
-  color: #fff !important;
-}
 
-.booking-consent,
-.booking-consent label,
-#quote-form .consent,
-#quote-form .consent label {
-  text-align: left !important;
-  justify-content: flex-start !important;
-}
+/* ===== Popup conferma richiesta ===== */
+.request-success-modal{position:fixed;inset:0;z-index:1400;display:none;align-items:center;justify-content:center;padding:22px}
+.request-success-modal.is-open{display:flex}
+.request-success-backdrop{position:absolute;inset:0;background:rgba(10,22,20,.68);backdrop-filter:blur(5px)}
+.request-success-dialog{position:relative;z-index:1;width:min(560px,94vw);padding:38px 44px 34px;background:var(--warm-card,#f8f3e8);border:1px solid rgba(182,160,111,.42);border-radius:22px;box-shadow:0 28px 90px rgba(0,0,0,.34);text-align:center;color:var(--ink,#2b2620)}
+.request-success-close{position:absolute;top:15px;right:17px;width:38px;height:38px;border:0;border-radius:50%;background:rgba(43,38,32,.07);color:var(--ink,#2b2620);font-size:26px;line-height:1;cursor:pointer}
+.request-success-logo{display:block;width:min(230px,60%);height:auto;margin:0 auto 24px;filter:none!important}
+.request-success-check{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 20px;border-radius:50%;background:rgba(24,105,92,.10);color:var(--forest,#176b5d);font-size:42px;font-weight:700}
+.request-success-dialog .eyebrow{margin:0 0 7px;color:#9c8350}
+.request-success-dialog h2{margin:0 0 16px;font-family:'Fraunces',serif;font-size:clamp(2rem,5vw,2.7rem);color:var(--forest,#176b5d)}
+.request-success-dialog p{max-width:455px;margin:0 auto;color:var(--ink-soft,#625c53);line-height:1.65}
+.request-success-divider{width:48px;height:2px;margin:22px auto;background:#b6a06f}
+.request-success-note{font-size:.92rem}
+.request-success-button{min-width:190px;margin-top:25px!important;color:#fff!important;background:var(--forest,#176b5d)!important;border-color:var(--forest,#176b5d)!important}
+@media(max-width:600px){.request-success-dialog{padding:32px 24px 27px}.request-success-logo{width:min(210px,68%)}.request-success-check{width:66px;height:66px;font-size:36px}}
 
-/* v13 — correzione definitiva pulsanti e consenso privacy */
+
+/* ===== FIX FINALE: pulsanti form + consenso privacy ===== */
 .booking-check-button,
+.booking-check-button:link,
+.booking-check-button:visited,
 .booking-check-button:hover,
 .booking-check-button:focus,
+.booking-check-button:focus-visible,
 .booking-check-button:active,
-.quote-form .btn,
-.quote-form .btn:hover,
-.quote-form .btn:focus,
-.quote-form .btn:active {
+#quote-form button[type="submit"],
+#quote-form button[type="submit"]:hover,
+#quote-form button[type="submit"]:focus,
+#quote-form button[type="submit"]:focus-visible,
+#quote-form button[type="submit"]:active {
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
-.quote-form .privacy-check {
-  display: grid !important;
-  grid-template-columns: auto 1fr !important;
-  align-items: start !important;
-  justify-content: start !important;
+#quote-form .privacy-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
   gap: 10px !important;
   width: 100% !important;
+  margin: 0 !important;
   text-align: left !important;
-  flex-direction: unset !important;
 }
 
-.quote-form .privacy-check input {
-  width: auto !important;
+#quote-form .privacy-check input[type="checkbox"] {
+  flex: 0 0 auto !important;
+  width: 18px !important;
+  height: 18px !important;
   margin: 3px 0 0 0 !important;
-  justify-self: start !important;
+}
+
+#quote-form .privacy-check,
+#quote-form .privacy-check * {
+  text-align: left !important;
 }
