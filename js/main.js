@@ -180,7 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
       state.busy = Array.isArray(data.busy) ? data.busy : [];
       state.rangeStart = data.rangeStart;
       state.rangeEnd = data.rangeEnd;
-      state.calendarOffset = 0;
+      // Apri la preview dal primo mese (nei 12 caricati) che contiene
+      // almeno un giorno futuro disponibile.
+      state.calendarOffset = findFirstAvailableMonthOffset(state.busy, state.calendarMonths);
       state.checkin = null;
       state.checkout = null;
       renderCalendarWindow(holder);
@@ -193,6 +195,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+
+function findFirstAvailableMonthOffset(busy, months) {
+  const now = new Date();
+  const today = localISO(now);
+
+  for (let offset = 0; offset < months; offset++) {
+    const year = new Date(now.getFullYear(), now.getMonth() + offset, 1).getFullYear();
+    const month = new Date(now.getFullYear(), now.getMonth() + offset, 1).getMonth();
+    const days = new Date(year, month + 1, 0).getDate();
+
+    for (let day = 1; day <= days; day++) {
+      const date = localISO(new Date(year, month, day));
+      if (date >= today && !dateIsBusy(date, busy)) return offset;
+    }
+  }
+
+  // Se nei 12 mesi caricati non c'è disponibilità, resta sull'ultimo
+  // intervallo visualizzabile di 3 mesi.
+  return Math.max(0, months - 3);
+}
 
 function renderCalendarWindow(holder) {
   holder.innerHTML = '';
