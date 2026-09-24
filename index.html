@@ -22,7 +22,7 @@
       <li><a href="#interni">Interni</a></li>
       <li><a href="#appartamenti">Appartamenti</a></li>
       <li><a href="#dintorni">Dintorni</a></li>
-      <li><a href="#contatti">Contatto</a></li>
+      <li><a href="#contatti">Contatti</a></li>
     </ul>
   </div>
 </nav>
@@ -33,7 +33,7 @@
     <h1>Un'oasi di pace a due passi dal centro di Locri.</h1>
     <p class="hero-lede">Ci auguriamo che troviate tutto il comfort necessario in questo accogliente appartamento in centro città. A piedi, in bicicletta o in monopattino, vi piacerà scoprire le strade della Locride.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary" href="#disponibilita">Verifica disponibilità</a>
+      <button class="btn btn-primary btn-availability-hero" type="button" data-open-booking>Verifica disponibilità</button>
       <a class="btn btn-ghost" href="#appartamenti">Scopri gli appartamenti</a>
     </div>
   </div>
@@ -196,39 +196,6 @@
   <p class="apart-price-note">Prezzi e disponibilità su richiesta, in base al periodo e al numero di persone.</p>
 </section>
 
-<section class="wrap" id="disponibilita">
-  <div class="section-head">
-    <p class="eyebrow">Disponibilità in tempo reale</p>
-    <h2>Verifica il tuo soggiorno</h2>
-    <p>Scegli appartamento e date. Le disponibilità vengono controllate sul calendario prima di inviare la richiesta.</p>
-  </div>
-  <div class="booking-panel">
-    <form id="availability-form" class="booking-form">
-      <label>Appartamento<select id="apartment" name="apartment" required><option value="bilocale">Bilocale · max 4</option><option value="trilocale">Trilocale · max 6</option></select></label>
-      <label>Check-in<input id="checkin" name="checkin" type="date" required></label>
-      <label>Check-out<input id="checkout" name="checkout" type="date" required></label>
-      <label>Ospiti<input id="guests" name="guests" type="number" min="1" max="4" value="2" required></label>
-      <button class="btn btn-primary" type="submit">Controlla disponibilità</button>
-    </form>
-    <div id="availability-result" class="form-status" aria-live="polite"></div>
-
-    <form id="quote-form" class="quote-form is-hidden">
-      <input type="hidden" name="apartment" id="quote-apartment"><input type="hidden" name="checkin" id="quote-checkin"><input type="hidden" name="checkout" id="quote-checkout"><input type="hidden" name="guests" id="quote-guests">
-      <h3>Richiedi un preventivo</h3>
-      <div class="quote-grid">
-        <label>Nome e cognome<input name="name" autocomplete="name" required></label>
-        <label>Email<input name="email" type="email" autocomplete="email" required></label>
-        <label>Telefono<input name="phone" type="tel" autocomplete="tel"></label>
-        <label class="wide">Messaggio<textarea name="message" rows="4" placeholder="Eventuali richieste, età dei bambini, orario previsto..."></textarea></label>
-      </div>
-      <label class="privacy-check"><input type="checkbox" required> Acconsento all'uso dei dati per rispondere a questa richiesta.</label>
-      <button class="btn btn-primary" type="submit">Invia richiesta</button>
-      <div id="quote-result" class="form-status" aria-live="polite"></div>
-    </form>
-  </div>
-</section>
-
-
 <section class="wrap" id="dintorni">
   <div class="section-head">
     <p class="eyebrow">Da fare, da vedere</p>
@@ -330,6 +297,18 @@
   </div>
 </section>
 
+
+<section class="wrap availability-spotlight" id="disponibilita">
+  <div class="availability-callout">
+    <div>
+      <p class="eyebrow">Disponibilità in tempo reale</p>
+      <h2>Hai già in mente le date?</h2>
+      <p>Scegli l’appartamento e consulta subito le disponibilità aggiornate dai nostri calendari.</p>
+    </div>
+    <button class="btn btn-primary btn-availability-large" type="button" data-open-booking>Verifica disponibilità</button>
+  </div>
+</section>
+
 <section class="contact-band" id="contatti">
   <div class="wrap section-head" style="margin-bottom: 2rem;">
     <p class="eyebrow">Prenota il tuo soggiorno</p>
@@ -354,6 +333,78 @@
   <span>Paradiso di Nosside · Locri, Calabria</span>
   <span>Il nome omaggia Nosside, poetessa greca nata a Locri nel IV sec. a.C.</span>
 </footer>
+
+<div class="booking-modal" id="booking-modal" aria-hidden="true">
+  <div class="booking-modal-backdrop" data-close-booking></div>
+  <div class="booking-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-title">
+    <button class="booking-close" type="button" aria-label="Chiudi" data-close-booking>×</button>
+
+    <div class="booking-step" id="apartment-step">
+      <p class="eyebrow">Paradiso di Nosside · Locri</p>
+      <h2 id="booking-title">Quale appartamento preferisci?</h2>
+      <p class="booking-intro">Seleziona una soluzione: caricheremo subito le disponibilità aggiornate da Google Calendar.</p>
+      <div class="booking-apartments">
+        <button class="booking-apartment-card" type="button" data-apartment="bilocale">
+          <img src="images/bilocale-soggiorno-vista.jpg" alt="Soggiorno del bilocale">
+          <span class="booking-card-body">
+            <span class="booking-card-kicker">1° appartamento</span>
+            <strong>Bilocale</strong>
+            <span>1 camera · 1 bagno · divano letto · max 4 persone</span>
+            <em>Vedi disponibilità →</em>
+          </span>
+        </button>
+        <button class="booking-apartment-card" type="button" data-apartment="trilocale">
+          <img src="images/trilocale-soggiorno.jpg" alt="Soggiorno del trilocale">
+          <span class="booking-card-body">
+            <span class="booking-card-kicker">2° appartamento</span>
+            <strong>Trilocale</strong>
+            <span>2 camere · 2 bagni · divano letto · max 6 persone</span>
+            <em>Vedi disponibilità →</em>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="booking-step is-hidden" id="calendar-step">
+      <button class="booking-back" type="button" id="booking-back">← Cambia appartamento</button>
+      <div class="booking-selected-head">
+        <div>
+          <p class="eyebrow">Disponibilità aggiornata</p>
+          <h2 id="selected-apartment-title">Bilocale</h2>
+        </div>
+        <div class="availability-legend"><span><i class="dot available"></i>Disponibile</span><span><i class="dot busy"></i>Occupato</span></div>
+      </div>
+      <div id="calendar-loading" class="calendar-loading">Controllo il calendario…</div>
+      <div id="availability-calendars" class="availability-calendars" aria-live="polite"></div>
+      <div id="calendar-error" class="form-status error is-hidden" aria-live="polite"></div>
+
+      <form id="availability-form" class="booking-form-modal is-hidden">
+        <input id="apartment" name="apartment" type="hidden">
+        <div class="booking-date-grid">
+          <label>Check-in<input id="checkin" name="checkin" type="date" required></label>
+          <label>Check-out<input id="checkout" name="checkout" type="date" required></label>
+          <label>Ospiti<input id="guests" name="guests" type="number" min="1" max="4" value="2" required></label>
+        </div>
+        <button class="btn btn-primary booking-check-button" type="submit">Conferma queste date</button>
+      </form>
+      <div id="availability-result" class="form-status" aria-live="polite"></div>
+
+      <form id="quote-form" class="quote-form is-hidden">
+        <input type="hidden" name="apartment" id="quote-apartment"><input type="hidden" name="checkin" id="quote-checkin"><input type="hidden" name="checkout" id="quote-checkout"><input type="hidden" name="guests" id="quote-guests">
+        <div class="quote-success-head"><span>✓</span><div><p class="eyebrow">Periodo disponibile</p><h3>Richiedi il preventivo</h3></div></div>
+        <div class="quote-grid">
+          <label>Nome e cognome<input name="name" autocomplete="name" required></label>
+          <label>Email<input name="email" type="email" autocomplete="email" required></label>
+          <label>Telefono<input name="phone" type="tel" autocomplete="tel"></label>
+          <label class="wide">Messaggio<textarea name="message" rows="4" placeholder="Eventuali richieste, età dei bambini, orario previsto..."></textarea></label>
+        </div>
+        <label class="privacy-check"><input type="checkbox" required> Acconsento all'uso dei dati per rispondere a questa richiesta.</label>
+        <button class="btn btn-primary" type="submit">Invia richiesta</button>
+        <div id="quote-result" class="form-status" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script src="js/main.js"></script>
 </body>
