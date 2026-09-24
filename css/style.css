@@ -27,6 +27,19 @@
   --line-strong: rgba(43, 38, 32, 0.3);
 }
 
+#booking-check,
+#quote-form button[type="submit"] {
+  color: #fff !important;
+}
+
+.booking-consent,
+.booking-consent label,
+#quote-form .consent,
+#quote-form .consent label {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --cream: #1c1912;
