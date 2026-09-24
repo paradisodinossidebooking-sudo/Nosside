@@ -2,7 +2,7 @@
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 
-const state = { apartment: null, busy: [], rangeStart: null, rangeEnd: null };
+const state = { apartment: null, busy: [], rangeStart: null, rangeEnd: null, calendarOffset: 0, calendarMonths: 12, checkin: null, checkout: null };
 
 document.addEventListener('DOMContentLoaded', () => {
   const modal = $('#booking-modal');
@@ -31,10 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
   checkin.addEventListener('change', () => {
     checkout.min = checkin.value || today;
     if (checkout.value && checkout.value <= checkin.value) checkout.value = '';
+    state.checkin = checkin.value || null;
+    state.checkout = null;
     quoteForm.classList.add('is-hidden');
     availabilityResult.textContent = '';
+    if (state.apartment && state.busy.length >= 0) renderCalendarWindow($('#availability-calendars'));
   });
-  checkout.addEventListener('change', () => { quoteForm.classList.add('is-hidden'); availabilityResult.textContent = ''; });
+  checkout.addEventListener('change', () => {
+    state.checkout = checkout.value || null;
+    quoteForm.classList.add('is-hidden'); availabilityResult.textContent = '';
+    if (state.apartment && state.busy.length >= 0) renderCalendarWindow($('#availability-calendars'));
+  });
 
   availabilityForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -126,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     error.classList.add('is-hidden');
     holder.innerHTML = '';
     try {
-      const r = await fetch('/api/availability?apartment=' + encodeURIComponent(value) + '&view=calendar&months=3', {
+      const r = await fetch('/api/availability?apartment=' + encodeURIComponent(value) + '&view=calendar&months=12', {
         headers: { 'accept': 'application/json' },
         cache: 'no-store'
       });
@@ -139,7 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
       state.busy = Array.isArray(data.busy) ? data.busy : [];
       state.rangeStart = data.rangeStart;
       state.rangeEnd = data.rangeEnd;
-      renderCalendars(holder, state.busy, 3);
+      state.calendarOffset = 0;
+      state.checkin = null;
+      state.checkout = null;
+      renderCalendarWindow(holder);
       availabilityForm.classList.remove('is-hidden');
     } catch (err) {
       error.textContent = err.message || 'Impossibile caricare le disponibilità.';
@@ -150,12 +160,52 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function renderCalendars(holder, busy, count) {
+function renderCalendarWindow(holder) {
+  holder.innerHTML = '';
+
+  const nav = document.createElement('div');
+  nav.className = 'calendar-window-nav';
+
+  const prev = document.createElement('button');
+  prev.type = 'button';
+  prev.className = 'calendar-arrow';
+  prev.setAttribute('aria-label', 'Mese precedente');
+  prev.textContent = '←';
+  prev.disabled = state.calendarOffset === 0;
+  prev.addEventListener('click', () => {
+    if (state.calendarOffset > 0) {
+      state.calendarOffset--;
+      renderCalendarWindow(holder);
+    }
+  });
+
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.className = 'calendar-arrow';
+  next.setAttribute('aria-label', 'Mese successivo');
+  next.textContent = '→';
+  next.disabled = state.calendarOffset >= state.calendarMonths - 3;
+  next.addEventListener('click', () => {
+    if (state.calendarOffset < state.calendarMonths - 3) {
+      state.calendarOffset++;
+      renderCalendarWindow(holder);
+    }
+  });
+
+  const label = document.createElement('div');
+  label.className = 'calendar-window-label';
+  label.textContent = 'Seleziona check-in e check-out direttamente sul calendario';
+  nav.append(prev, label, next);
+  holder.appendChild(nav);
+
+  const months = document.createElement('div');
+  months.className = 'calendar-months-window';
   const now = new Date();
-  for (let i = 0; i < count; i++) {
-    const monthDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    holder.appendChild(buildMonth(monthDate, busy));
+  for (let i = 0; i < 3; i++) {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() + state.calendarOffset + i, 1);
+    months.appendChild(buildMonth(monthDate, state.busy));
   }
+  holder.appendChild(months);
 }
 
 function buildMonth(monthDate, busy) {
@@ -176,16 +226,60 @@ function buildMonth(monthDate, busy) {
   const days = new Date(year, month + 1, 0).getDate();
   for (let d = 1; d <= days; d++) {
     const date = localISO(new Date(year, month, d));
-    const el = document.createElement('span');
+    const el = document.createElement('button');
+    el.type = 'button';
     const past = date < today;
     const occupied = !past && dateIsBusy(date, busy);
+    const selectable = !past && !occupied;
     el.className = 'calendar-day ' + (past ? 'past' : occupied ? 'busy' : 'available');
     el.textContent = d;
+    el.dataset.date = date;
+    el.disabled = !selectable;
     el.title = past ? 'Data passata' : occupied ? 'Occupato' : 'Disponibile';
+
+    if (state.checkin === date) el.classList.add('selected-checkin');
+    if (state.checkout === date) el.classList.add('selected-checkout');
+    if (state.checkin && state.checkout && date > state.checkin && date < state.checkout) el.classList.add('selected-range');
+
+    if (selectable) el.addEventListener('click', () => selectCalendarDate(date));
     grid.appendChild(el);
   }
   box.appendChild(grid);
   return box;
+}
+
+function selectCalendarDate(date) {
+  const checkin = document.querySelector('#checkin');
+  const checkout = document.querySelector('#checkout');
+  const quoteForm = document.querySelector('#quote-form');
+  const result = document.querySelector('#availability-result');
+
+  // Prima data = check-in. Dopo una selezione completa, un nuovo click ricomincia.
+  if (!state.checkin || state.checkout || date <= state.checkin) {
+    state.checkin = date;
+    state.checkout = null;
+    checkin.value = date;
+    checkout.value = '';
+    checkout.min = date;
+  } else {
+    // Non consentire soggiorni che attraversano anche un solo giorno occupato.
+    if (rangeTouchesBusy(state.checkin, date, state.busy)) {
+      setStatus(result, 'Tra il check-in e il check-out c’è almeno un giorno occupato. Scegli un altro periodo.', 'error');
+      return;
+    }
+    state.checkout = date;
+    checkout.value = date;
+  }
+
+  quoteForm.classList.add('is-hidden');
+  if (!state.checkout) result.textContent = 'Ora seleziona la data di check-out.';
+  else result.textContent = `Date selezionate: ${formatItalianDate(state.checkin)} → ${formatItalianDate(state.checkout)}`;
+  renderCalendarWindow(document.querySelector('#availability-calendars'));
+}
+
+function formatItalianDate(ymd) {
+  const [y,m,d] = ymd.split('-').map(Number);
+  return new Intl.DateTimeFormat('it-IT', { day:'numeric', month:'short', year:'numeric' }).format(new Date(y,m-1,d));
 }
 
 function dateIsBusy(date, busy) {

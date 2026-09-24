@@ -778,3 +778,24 @@ body{background:var(--warm)}
   margin: 8px auto 26px;
   text-align: center;
 }
+
+
+/* ===== Date picker 12 mesi / finestra 3 mesi ===== */
+.availability-calendars{display:block!important;margin:1.4rem 0}
+.calendar-window-nav{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:12px;margin:0 0 10px}
+.calendar-window-label{text-align:center;color:var(--ink-soft);font-size:.9rem;font-weight:600}
+.calendar-arrow{width:42px;height:42px;border-radius:999px;border:1px solid rgba(43,38,32,.18);background:#fff;color:var(--forest);font-size:1.3rem;cursor:pointer;box-shadow:0 4px 14px rgba(36,29,18,.07)}
+.calendar-arrow:hover:not(:disabled){transform:translateY(-1px);border-color:var(--forest)}
+.calendar-arrow:disabled{opacity:.28;cursor:not-allowed}
+.calendar-months-window{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.calendar-day{border:0;font-family:inherit;line-height:1;transition:transform .12s ease,box-shadow .12s ease,background .12s ease}
+.calendar-day.available{cursor:pointer}
+.calendar-day.available:hover{transform:translateY(-1px);box-shadow:0 0 0 2px rgba(40,93,69,.24)}
+.calendar-day.busy,.calendar-day.past{cursor:not-allowed}
+.calendar-day.selected-range{background:#d8e8dc!important;color:#285d45!important;border-radius:4px}
+.calendar-day.selected-checkin,.calendar-day.selected-checkout{background:var(--forest)!important;color:#fff!important;font-weight:800;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 4px var(--forest)}
+@media(max-width:760px){
+  .calendar-months-window{grid-template-columns:1fr}
+  .availability-calendars .mini-calendar:nth-child(n+2){display:block!important}
+  .calendar-window-label{font-size:.78rem}
+}

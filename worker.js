@@ -53,9 +53,9 @@ async function checkAvailability(request, env) {
   if (!calendarId) throw new Error('Calendar ID non configurato');
   const token = await googleToken(env);
 
-  // Vista calendario: restituisce i periodi occupati dei prossimi 1-6 mesi.
+  // Vista calendario: restituisce i periodi occupati dei prossimi 1-12 mesi.
   if (url.searchParams.get('view') === 'calendar') {
-    const months = Math.min(6, Math.max(1, Number(url.searchParams.get('months')) || 3));
+    const months = Math.min(12, Math.max(1, Number(url.searchParams.get('months')) || 3));
     const start = startOfToday();
     const end = new Date(start);
     end.setMonth(end.getMonth() + months);
