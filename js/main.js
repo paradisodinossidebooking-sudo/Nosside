@@ -416,3 +416,36 @@ function setStatus(el, msg, type) {
   }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
 })();
+
+// Carousel recensioni: una recensione in primo piano con anteprima della successiva.
+(() => {
+  const carousel = document.querySelector('[data-reviews-carousel]');
+  if (!carousel) return;
+  const viewport = carousel.querySelector('.reviews-viewport');
+  const track = carousel.querySelector('.reviews-track');
+  const cards = [...track.querySelectorAll('.review-card')];
+  const prev = carousel.querySelector('.reviews-prev');
+  const next = carousel.querySelector('.reviews-next');
+  const dotsWrap = document.querySelector('.reviews-dots');
+  let index = 0;
+
+  cards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button'; dot.className = 'reviews-dot';
+    dot.addEventListener('click', () => { index = i; render(); });
+    dotsWrap.appendChild(dot);
+  });
+  const dots = [...dotsWrap.children];
+
+  function render() {
+    const card = cards[0];
+    if (!card) return;
+    const gap = parseFloat(getComputedStyle(track).gap) || 0;
+    track.style.transform = `translateX(-${index * (card.getBoundingClientRect().width + gap)}px)`;
+    dots.forEach((d,i) => d.classList.toggle('is-active', i === index));
+  }
+  prev.addEventListener('click', () => { index = (index - 1 + cards.length) % cards.length; render(); });
+  next.addEventListener('click', () => { index = (index + 1) % cards.length; render(); });
+  window.addEventListener('resize', render);
+  render();
+})();

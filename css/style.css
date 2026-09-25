@@ -864,15 +864,7 @@ body{background:var(--warm)}
   margin: 22px 0 26px 0 !important;
   padding: 4px 0 !important;
 }
-.confirmation-modal .btn,
-.confirmation-modal button,
-#confirmation-modal .btn,
-#confirmation-modal button {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-}
+
 
 /* ===== WhatsApp + mappa ===== */
 .location-section{padding:clamp(54px,7vw,92px) 0;background:var(--paper)}
@@ -882,3 +874,41 @@ body{background:var(--warm)}
 .whatsapp-float{position:fixed;right:22px;bottom:22px;z-index:90;display:flex;align-items:center;gap:9px;padding:13px 17px;border-radius:999px;background:#176b5f;color:#fff!important;text-decoration:none;font-weight:700;box-shadow:0 10px 28px rgba(0,0,0,.22);transition:transform .2s ease,box-shadow .2s ease}.whatsapp-float:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.28)}.whatsapp-icon{font-size:1.15rem}
 .request-success-whatsapp{display:flex;align-items:center;justify-content:center;width:100%;margin:10px 0;background:#176b5f;color:#fff!important}.request-success-button{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;width:100%}
 @media(max-width:760px){.location-grid{grid-template-columns:1fr}.map-frame,.map-frame iframe{min-height:320px;height:320px}.whatsapp-float{right:14px;bottom:14px;padding:12px 14px}.whatsapp-float span:last-child{display:none}}
+
+/* ===== Servizi appartamenti + recensioni + lingua EN ===== */
+.lang-toggle{flex:0 0 auto;border:1px solid rgba(255,255,255,.62);background:rgba(255,255,255,.10);color:#fff;border-radius:999px;padding:9px 11px;font:700 .78rem/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(8px)}
+.lang-toggle:hover{background:rgba(255,255,255,.2)}
+.apartment-services{padding-top:clamp(56px,7vw,92px);padding-bottom:clamp(56px,7vw,92px)}
+.services-apartment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.services-apartment-card{background:var(--warm-card,#f8f3e8);border:1px solid rgba(182,160,111,.28);border-radius:22px;padding:28px;box-shadow:0 14px 40px rgba(36,29,18,.07)}
+.services-card-head{display:flex;align-items:center;gap:16px;margin-bottom:22px}.services-card-head>span{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#b6a06f;color:#fff;font-weight:800}.services-card-head .eyebrow{margin:0 0 3px}.services-card-head h3{margin:0;font-family:'Fraunces',serif;font-size:1.55rem;color:var(--forest)}
+.amenities-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.amenities-grid span{display:flex;align-items:center;min-height:46px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.62);font-size:.92rem;color:var(--ink)}
+.services-provisional{margin:18px auto 0;text-align:center;max-width:760px;font-size:.86rem;color:var(--ink-soft);font-style:italic}
+.reviews-section{padding:clamp(64px,8vw,105px) 0;background:#f5efe3}.reviews-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.review-card{display:flex;flex-direction:column;min-height:300px;padding:27px 24px;background:#fff;border:1px solid rgba(182,160,111,.22);border-radius:18px;box-shadow:0 12px 34px rgba(36,29,18,.06)}.review-stars{color:#b2924f;letter-spacing:.12em;font-size:.9rem}.review-card blockquote{margin:20px 0 24px;padding:0;border:0;font-family:'Fraunces',serif;font-size:1.04rem;line-height:1.65;color:var(--ink);flex:1}.review-author{display:flex;flex-direction:column;gap:2px;padding-top:16px;border-top:1px solid rgba(43,38,32,.1)}.review-author strong{color:var(--forest)}.review-author span{font-size:.78rem;color:var(--ink-soft)}
+@media(max-width:980px){.reviews-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.lang-toggle{margin-left:auto}.services-apartment-grid,.amenities-grid,.reviews-grid{grid-template-columns:1fr}.services-apartment-card{padding:22px}.review-card{min-height:0}}
+
+/* ===== Recensioni carousel: una card principale + preview successiva ===== */
+.reviews-head{margin-bottom:30px}
+.reviews-carousel{position:relative;display:flex;align-items:center;gap:14px;overflow:hidden}
+.reviews-viewport{overflow:hidden;width:100%;padding:8px 0 22px}
+.reviews-track{display:flex;gap:24px;transition:transform .48s cubic-bezier(.22,.61,.36,1);will-change:transform}
+.reviews-track .review-card{flex:0 0 min(760px,82%);min-height:330px;padding:38px 40px;border-radius:24px}
+.reviews-track .review-card blockquote{font-size:clamp(1.12rem,2vw,1.4rem);line-height:1.65}
+.reviews-arrow{position:relative;z-index:3;flex:0 0 48px;width:48px;height:48px;border-radius:50%;border:1px solid rgba(182,160,111,.55);background:#fff;color:var(--forest);font-size:2rem;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 22px rgba(36,29,18,.08);transition:.2s ease}
+.reviews-arrow:hover{transform:translateY(-2px);border-color:#b6a06f}
+.reviews-dots{display:flex;justify-content:center;gap:8px;margin-top:3px}
+.reviews-dot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:rgba(43,38,32,.22);cursor:pointer}
+.reviews-dot.is-active{width:22px;border-radius:999px;background:#b6a06f}
+@media(max-width:760px){.reviews-carousel{gap:6px}.reviews-arrow{flex-basis:40px;width:40px;height:40px}.reviews-track{gap:14px}.reviews-track .review-card{flex-basis:88%;min-height:310px;padding:28px 24px}}
+
+
+.confirmation-modal .btn,
+.confirmation-modal button,
+#confirmation-modal .btn,
+#confirmation-modal button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
