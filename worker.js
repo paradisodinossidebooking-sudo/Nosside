@@ -135,41 +135,24 @@ async function sendQuote(request, env) {
   if (!env.RESEND_API_KEY) throw new Error('Manca RESEND_API_KEY');
   if (!env.MAIL_FROM) throw new Error('Manca MAIL_FROM');
 
-  const apartmentName = b.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
-  const subject = `Richiesta preventivo ${apartmentName} · ${b.checkin} → ${b.checkout}`;
-  const html = `<h2>Nuova richiesta dal sito</h2><p><b>Appartamento:</b> ${esc(apartmentName)}<br><b>Check-in:</b> ${esc(b.checkin)}<br><b>Check-out:</b> ${esc(b.checkout)}<br><b>Ospiti:</b> ${esc(String(b.guests))}</p><p><b>Nome:</b> ${esc(b.name)}<br><b>Email:</b> ${esc(b.email)}<br><b>Telefono:</b> ${esc(b.phone || '-')}</p><p><b>Messaggio:</b><br>${esc(b.message || '-')}</p>`;
+  const lang = ['it','en','fr','de'].includes(String(b.lang || '').toLowerCase()) ? String(b.lang).toLowerCase() : 'it';
+  const langInfo = {
+    it:{flag:'🇮🇹',label:'Italiano',apt:{bilocale:'Bilocale',trilocale:'Trilocale'},subject:'Abbiamo ricevuto la tua richiesta · Paradiso di Nosside',hello:n=>`Grazie ${n}, richiesta ricevuta!`,received:'Abbiamo ricevuto la tua richiesta e ti risponderemo al più presto con tutte le informazioni per il soggiorno.',guests:'Ospiti',important:'Importante:',notice:'questa email conferma soltanto la ricezione della richiesta e non costituisce una conferma di prenotazione.',bye:'A presto'},
+    en:{flag:'🇬🇧',label:'English',apt:{bilocale:'One-bedroom apartment',trilocale:'Two-bedroom apartment'},subject:'We received your request · Paradiso di Nosside',hello:n=>`Thank you ${n}, request received!`,received:'We have received your request and will get back to you as soon as possible with all the information for your stay.',guests:'Guests',important:'Important:',notice:'this email only confirms receipt of your request and does not constitute a booking confirmation.',bye:'See you soon'},
+    fr:{flag:'🇫🇷',label:'Français',apt:{bilocale:'Appartement 1 chambre',trilocale:'Appartement 2 chambres'},subject:'Nous avons reçu votre demande · Paradiso di Nosside',hello:n=>`Merci ${n}, demande reçue !`,received:'Nous avons bien reçu votre demande et nous vous répondrons au plus vite avec toutes les informations pour votre séjour.',guests:'Voyageurs',important:'Important :',notice:'cet e-mail confirme uniquement la réception de votre demande et ne constitue pas une confirmation de réservation.',bye:'À bientôt'},
+    de:{flag:'🇩🇪',label:'Deutsch',apt:{bilocale:'Apartment mit 1 Schlafzimmer',trilocale:'Apartment mit 2 Schlafzimmern'},subject:'Wir haben Ihre Anfrage erhalten · Paradiso di Nosside',hello:n=>`Vielen Dank ${n}, Anfrage erhalten!`,received:'Wir haben Ihre Anfrage erhalten und melden uns so schnell wie möglich mit allen Informationen zu Ihrem Aufenthalt.',guests:'Gäste',important:'Wichtig:',notice:'diese E-Mail bestätigt nur den Eingang Ihrer Anfrage und stellt keine Buchungsbestätigung dar.',bye:'Bis bald'}
+  }[lang];
+  const apartmentNameIt = b.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
+  const apartmentNameGuest = langInfo.apt[b.apartment] || apartmentNameIt;
 
-  await resendEmail(env, {
-    to: [env.MAIL_TO || 'paradisodinossidebooking@gmail.com'],
-    reply_to: b.email,
-    subject,
-    html
-  });
+  const subject = `${langInfo.flag} Richiesta preventivo ${apartmentNameIt} · ${b.checkin} → ${b.checkout}`;
+  const html = `<h2>Nuova richiesta dal sito</h2><p><b>Lingua usata sul sito:</b> ${langInfo.flag} ${esc(langInfo.label)} (${lang.toUpperCase()})</p><p><b>Appartamento:</b> ${esc(apartmentNameIt)}<br><b>Check-in:</b> ${esc(b.checkin)}<br><b>Check-out:</b> ${esc(b.checkout)}<br><b>Ospiti:</b> ${esc(String(b.guests))}</p><p><b>Nome:</b> ${esc(b.name)}<br><b>Email:</b> ${esc(b.email)}<br><b>Telefono:</b> ${esc(b.phone || '-')}</p><p><b>Messaggio:</b><br>${esc(b.message || '-')}</p>`;
 
-  // Conferma automatica all'ospite. Non equivale a conferma di prenotazione.
-  const guestSubject = 'Abbiamo ricevuto la tua richiesta · Paradiso di Nosside';
-  const guestHtml = `
-    <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#2b2620;line-height:1.6">
-      <div style="text-align:center;padding:24px 0 10px"><strong style="font-family:Georgia,serif;font-size:24px;color:#b6a06f">PARADISO DI NOSSIDE</strong></div>
-      <h2 style="font-family:Georgia,serif;color:#176b5f">Grazie ${esc(b.name)}, richiesta ricevuta!</h2>
-      <p>Abbiamo ricevuto la tua richiesta e ti risponderemo al più presto con tutte le informazioni per il soggiorno.</p>
-      <div style="background:#f5f0e6;padding:18px 20px;margin:22px 0;border-radius:10px">
-        <b>${esc(apartmentName)}</b><br>
-        Check-in: ${esc(b.checkin)}<br>
-        Check-out: ${esc(b.checkout)}<br>
-        Ospiti: ${esc(String(b.guests))}
-      </div>
-      <p><b>Importante:</b> questa email conferma soltanto la ricezione della richiesta e non costituisce una conferma di prenotazione.</p>
-      <p>A presto,<br><b>Paradiso di Nosside</b></p>
-    </div>`;
+  await resendEmail(env, {to:[env.MAIL_TO || 'paradisodinossidebooking@gmail.com'],reply_to:b.email,subject,html});
 
-  await resendEmail(env, {
-    to: [b.email],
-    reply_to: env.MAIL_TO || 'paradisodinossidebooking@gmail.com',
-    subject: guestSubject,
-    html: guestHtml
-  });
+  const guestHtml = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#2b2620;line-height:1.6"><div style="text-align:center;padding:24px 0 10px"><strong style="font-family:Georgia,serif;font-size:24px;color:#b6a06f">PARADISO DI NOSSIDE</strong></div><h2 style="font-family:Georgia,serif;color:#176b5f">${langInfo.hello(esc(b.name))}</h2><p>${langInfo.received}</p><div style="background:#f5f0e6;padding:18px 20px;margin:22px 0;border-radius:10px"><b>${esc(apartmentNameGuest)}</b><br>Check-in: ${esc(b.checkin)}<br>Check-out: ${esc(b.checkout)}<br>${langInfo.guests}: ${esc(String(b.guests))}</div><p><b>${langInfo.important}</b> ${langInfo.notice}</p><p>${langInfo.bye},<br><b>Paradiso di Nosside</b></p></div>`;
 
+  await resendEmail(env, {to:[b.email],reply_to:env.MAIL_TO || 'paradisodinossidebooking@gmail.com',subject:langInfo.subject,html:guestHtml});
   return json({ ok: true });
 }
 

@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus(quoteResult, 'Invio in corso…', '');
     try {
       const payload = Object.fromEntries(new FormData(quoteForm).entries());
+      payload.lang = window.NOSSIDE_LANG || document.documentElement.lang || 'it';
       const r = await fetch('/api/quote', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload) });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || 'Invio non riuscito.');
@@ -272,11 +273,11 @@ function buildMonth(monthDate, busy) {
   const box = document.createElement('section');
   box.className = 'mini-calendar';
   const title = document.createElement('h3');
-  title.textContent = new Intl.DateTimeFormat('it-IT', { month:'long', year:'numeric' }).format(monthDate);
+  title.textContent = new Intl.DateTimeFormat(window.nossideLocale?.() || 'it-IT', { month:'long', year:'numeric' }).format(monthDate);
   box.appendChild(title);
   const grid = document.createElement('div');
   grid.className = 'calendar-grid';
-  ['L','M','M','G','V','S','D'].forEach(d => { const el = document.createElement('span'); el.className='calendar-weekday'; el.textContent=d; grid.appendChild(el); });
+  Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(window.nossideLocale?.() || 'it-IT',{weekday:'narrow'}).format(new Date(2024,0,1+i))).forEach(d => { const el = document.createElement('span'); el.className='calendar-weekday'; el.textContent=d; grid.appendChild(el); });
   const first = new Date(year, month, 1);
   const offset = (first.getDay() + 6) % 7;
   for (let i = 0; i < offset; i++) { const blank=document.createElement('span'); blank.className='calendar-day blank'; grid.appendChild(blank); }
@@ -350,7 +351,7 @@ function updateWhatsAppLinks() {
 
 function formatItalianDate(ymd) {
   const [y,m,d] = ymd.split('-').map(Number);
-  return new Intl.DateTimeFormat('it-IT', { day:'numeric', month:'short', year:'numeric' }).format(new Date(y,m-1,d));
+  return new Intl.DateTimeFormat(window.nossideLocale?.() || 'it-IT', { day:'numeric', month:'short', year:'numeric' }).format(new Date(y,m-1,d));
 }
 
 function dateIsBusy(date, busy) {

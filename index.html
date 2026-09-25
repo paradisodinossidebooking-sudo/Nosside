@@ -16,7 +16,7 @@
     <ul class="nav-links premium-links">
       <li><a href="#interni">Gli appartamenti</a></li><li><a href="#dintorni">La zona</a></li><li><a href="#interni">Galleria</a></li><li><a href="#recensioni">Recensioni</a></li><li><a href="#contatti">Contatti</a></li>
     </ul>
-    <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Switch language">EN</button>
+    <div class="language-picker" aria-label="Lingua"><span class="language-icon" aria-hidden="true">🌐</span><button type="button" data-lang="it" title="Italiano" aria-label="Italiano"><span class="flag-emoji" aria-hidden="true">🇮🇹</span> <span>IT</span></button><button type="button" data-lang="en" title="English" aria-label="English"><span class="flag-emoji" aria-hidden="true">🇬🇧</span> <span>EN</span></button><button type="button" data-lang="fr" title="Français" aria-label="Français"><span class="flag-emoji" aria-hidden="true">🇫🇷</span> <span>FR</span></button><button type="button" data-lang="de" title="Deutsch" aria-label="Deutsch"><span class="flag-emoji" aria-hidden="true">🇩🇪</span> <span>DE</span></button></div>
     <button class="nav-book btn btn-primary btn-availability-large" type="button" data-open-booking>Verifica disponibilità <span aria-hidden="true">→</span></button>
   </div>
 </nav>
@@ -427,7 +427,7 @@
       <div id="availability-result" class="form-status" aria-live="polite"></div>
 
       <form id="quote-form" class="quote-form is-hidden">
-        <input type="hidden" name="apartment" id="quote-apartment"><input type="hidden" name="checkin" id="quote-checkin"><input type="hidden" name="checkout" id="quote-checkout"><input type="hidden" name="guests" id="quote-guests">
+        <input type="hidden" name="lang" id="quote-lang"><input type="hidden" name="apartment" id="quote-apartment"><input type="hidden" name="checkin" id="quote-checkin"><input type="hidden" name="checkout" id="quote-checkout"><input type="hidden" name="guests" id="quote-guests">
         <div class="quote-success-head"><span>✓</span><div><p class="eyebrow">Periodo disponibile</p><h3>Richiedi il preventivo</h3></div></div>
         <div class="quote-grid">
           <label>Nome e cognome<input name="name" autocomplete="name" required></label>
