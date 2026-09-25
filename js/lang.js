@@ -47,7 +47,7 @@
     document.documentElement.lang=lang;
     document.title=lang==='en'?'Paradiso di Nosside — Holidays in Locri':'Paradiso di Nosside — Estate a Locri';
     const meta=document.querySelector('meta[name="description"]'); if(meta) meta.content=lang==='en'?'Holiday apartments in Locri on Calabria’s Ionian coast. One- and two-bedroom apartments close to the town centre.':'Appartamenti in affitto a Locri, sulla costa ionica della Calabria. Bilocale e trilocale a due passi dal centro.';
-    const b=document.querySelector('#lang-toggle'); if(b){b.textContent=lang==='en'?'IT':'EN';b.setAttribute('aria-label',lang==='en'?'Passa all’italiano':'Switch to English')}
+    const b=document.querySelector('#lang-toggle'); if(b){const label=lang==='en'?'IT':'EN'; const aria=lang==='en'?'Passa all’italiano':'Switch to English'; if(b.textContent!==label) b.textContent=label; if(b.getAttribute('aria-label')!==aria) b.setAttribute('aria-label',aria)}
   }
   function setLang(next){lang=next;window.NOSSIDE_LANG=lang;localStorage.setItem('nosside-lang',lang);process(document)}
   window.NOSSIDE_LANG=lang; window.nossideTranslate=()=>process(document);
