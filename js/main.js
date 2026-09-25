@@ -330,8 +330,22 @@ function selectCalendarDate(date) {
 
   quoteForm.classList.add('is-hidden');
   if (!state.checkout) result.textContent = 'Ora seleziona la data di check-out.';
-  else result.textContent = `Date selezionate: ${formatItalianDate(state.checkin)} → ${formatItalianDate(state.checkout)}`;
+  else {
+    result.textContent = `Date selezionate: ${formatItalianDate(state.checkin)} → ${formatItalianDate(state.checkout)}`;
+    updateWhatsAppLinks();
+  }
   renderCalendarWindow(document.querySelector('#availability-calendars'));
+}
+
+function updateWhatsAppLinks() {
+  const apartment = state.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
+  const guests = document.querySelector('#guests')?.value || '2';
+  const dates = state.checkin && state.checkout
+    ? ` dal ${formatItalianDate(state.checkin)} al ${formatItalianDate(state.checkout)}`
+    : '';
+  const message = `Ciao, vorrei informazioni sul ${apartment}${dates} per ${guests} ospiti.`;
+  const href = `https://wa.me/393276632856?text=${encodeURIComponent(message)}`;
+  document.querySelectorAll('#whatsapp-contact, #success-whatsapp').forEach(el => el.href = href);
 }
 
 function formatItalianDate(ymd) {

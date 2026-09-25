@@ -135,19 +135,55 @@ async function sendQuote(request, env) {
   if (!env.RESEND_API_KEY) throw new Error('Manca RESEND_API_KEY');
   if (!env.MAIL_FROM) throw new Error('Manca MAIL_FROM');
 
-  const subject = `Richiesta preventivo ${b.apartment} · ${b.checkin} → ${b.checkout}`;
-  const html = `<h2>Nuova richiesta dal sito</h2><p><b>Appartamento:</b> ${esc(b.apartment)}<br><b>Check-in:</b> ${esc(b.checkin)}<br><b>Check-out:</b> ${esc(b.checkout)}<br><b>Ospiti:</b> ${esc(String(b.guests))}</p><p><b>Nome:</b> ${esc(b.name)}<br><b>Email:</b> ${esc(b.email)}<br><b>Telefono:</b> ${esc(b.phone || '-')}</p><p><b>Messaggio:</b><br>${esc(b.message || '-')}</p>`;
+  const apartmentName = b.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
+  const subject = `Richiesta preventivo ${apartmentName} · ${b.checkin} → ${b.checkout}`;
+  const html = `<h2>Nuova richiesta dal sito</h2><p><b>Appartamento:</b> ${esc(apartmentName)}<br><b>Check-in:</b> ${esc(b.checkin)}<br><b>Check-out:</b> ${esc(b.checkout)}<br><b>Ospiti:</b> ${esc(String(b.guests))}</p><p><b>Nome:</b> ${esc(b.name)}<br><b>Email:</b> ${esc(b.email)}<br><b>Telefono:</b> ${esc(b.phone || '-')}</p><p><b>Messaggio:</b><br>${esc(b.message || '-')}</p>`;
+
+  await resendEmail(env, {
+    to: [env.MAIL_TO || 'paradisodinossidebooking@gmail.com'],
+    reply_to: b.email,
+    subject,
+    html
+  });
+
+  // Conferma automatica all'ospite. Non equivale a conferma di prenotazione.
+  const guestSubject = 'Abbiamo ricevuto la tua richiesta · Paradiso di Nosside';
+  const guestHtml = `
+    <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#2b2620;line-height:1.6">
+      <div style="text-align:center;padding:24px 0 10px"><strong style="font-family:Georgia,serif;font-size:24px;color:#b6a06f">PARADISO DI NOSSIDE</strong></div>
+      <h2 style="font-family:Georgia,serif;color:#176b5f">Grazie ${esc(b.name)}, richiesta ricevuta!</h2>
+      <p>Abbiamo ricevuto la tua richiesta e ti risponderemo al più presto con tutte le informazioni per il soggiorno.</p>
+      <div style="background:#f5f0e6;padding:18px 20px;margin:22px 0;border-radius:10px">
+        <b>${esc(apartmentName)}</b><br>
+        Check-in: ${esc(b.checkin)}<br>
+        Check-out: ${esc(b.checkout)}<br>
+        Ospiti: ${esc(String(b.guests))}
+      </div>
+      <p><b>Importante:</b> questa email conferma soltanto la ricezione della richiesta e non costituisce una conferma di prenotazione.</p>
+      <p>A presto,<br><b>Paradiso di Nosside</b></p>
+    </div>`;
+
+  await resendEmail(env, {
+    to: [b.email],
+    reply_to: env.MAIL_TO || 'paradisodinossidebooking@gmail.com',
+    subject: guestSubject,
+    html: guestHtml
+  });
+
+  return json({ ok: true });
+}
+
+async function resendEmail(env, message) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ from: env.MAIL_FROM, to: [env.MAIL_TO || 'paradisodinossidebooking@gmail.com'], reply_to: b.email, subject, html })
+    body: JSON.stringify({ from: env.MAIL_FROM, ...message })
   });
   if (!r.ok) {
     const detail = await r.text();
     console.error('RESEND ERROR:', detail);
     throw new Error('Invio email non riuscito');
   }
-  return json({ ok: true });
 }
 
 async function googleToken(env) {
