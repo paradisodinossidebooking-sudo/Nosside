@@ -36,6 +36,8 @@ export default {
       if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, worker: 'nosside-v3' });
       if (url.pathname === '/api/availability' && request.method === 'GET') return checkAvailability(request, env);
       if (url.pathname === '/api/quote' && request.method === 'POST') return sendQuote(request, env);
+      if (url.pathname === '/admin/quote' && request.method === 'GET') return quoteAdminPage(request, env);
+      if (url.pathname === '/api/admin/send-quote' && request.method === 'POST') return sendApprovedQuote(request, env);
       return env.ASSETS.fetch(request);
     } catch (error) {
       console.error('WORKER ERROR:', error);
@@ -134,27 +136,155 @@ async function sendQuote(request, env) {
   if (required.some(k => !b[k])) return json({ error: 'Compila tutti i campi obbligatori.' }, 400);
   if (!env.RESEND_API_KEY) throw new Error('Manca RESEND_API_KEY');
   if (!env.MAIL_FROM) throw new Error('Manca MAIL_FROM');
+  if (!env.ADMIN_QUOTE_SECRET) throw new Error('Manca ADMIN_QUOTE_SECRET');
 
-  const lang = ['it','en','fr','de'].includes(String(b.lang || '').toLowerCase()) ? String(b.lang).toLowerCase() : 'it';
-  const langInfo = {
+  const lang = normalizeLang(b.lang);
+  const li = languageInfo(lang);
+  const apartmentNameIt = b.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
+  const apartmentNameGuest = li.apt[b.apartment] || apartmentNameIt;
+  const pricing = calculateQuote(b.apartment, Number(b.guests), b.checkin, b.checkout);
+  const quoteId = makeQuoteId();
+  const record = {
+    quoteId, createdAt: new Date().toISOString(), lang,
+    name:String(b.name), email:String(b.email), phone:String(b.phone || ''), message:String(b.message || ''),
+    apartment:b.apartment, checkin:b.checkin, checkout:b.checkout, guests:Number(b.guests), pricing
+  };
+  const token = await signQuote(record, env.ADMIN_QUOTE_SECRET);
+  const origin = new URL(request.url).origin;
+  const confirmUrl = `${origin}/admin/quote?mode=confirm&token=${encodeURIComponent(token)}`;
+  const editUrl = `${origin}/admin/quote?mode=edit&token=${encodeURIComponent(token)}`;
+
+  const pricingHtml = pricing.ok
+    ? `<div style="background:#f5f0e6;padding:18px 20px;margin:20px 0;border-radius:10px"><b>Preventivo calcolato automaticamente</b><br>Notti: ${pricing.nights}<br>Fascia ospiti: ${esc(pricing.guestBand)}<br>${pricing.weeklyApplied ? 'Tariffa settimanale applicata<br>' : ''}<b>Totale proposto: €${money(pricing.total)}</b>${pricing.breakdown?.length ? `<br><small>${pricing.breakdown.map(esc).join('<br>')}</small>` : ''}</div>`
+    : `<div style="background:#fff4df;padding:18px 20px;margin:20px 0;border-radius:10px"><b>Prezzo da impostare manualmente</b><br>${esc(pricing.error)}</div>`;
+
+  const subject = `${li.flag} ${pricing.ok ? `€${money(pricing.total)} · ` : ''}Richiesta preventivo ${apartmentNameIt} · ${b.checkin} → ${b.checkout}`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;color:#2b2620;line-height:1.55"><h2>Nuova richiesta dal sito</h2><p><b>ID:</b> ${esc(quoteId)}<br><b>Lingua usata:</b> ${li.flag} ${esc(li.label)} (${lang.toUpperCase()})</p><p><b>Appartamento:</b> ${esc(apartmentNameIt)}<br><b>Check-in:</b> ${esc(b.checkin)}<br><b>Check-out:</b> ${esc(b.checkout)}<br><b>Ospiti:</b> ${esc(String(b.guests))}</p><p><b>Nome:</b> ${esc(b.name)}<br><b>Email:</b> ${esc(b.email)}<br><b>Telefono:</b> ${esc(b.phone || '-')}</p><p><b>Messaggio:</b><br>${esc(b.message || '-')}</p>${pricingHtml}<p style="margin-top:26px"><a href="${esc(confirmUrl)}" style="display:inline-block;background:#176b5f;color:#fff;text-decoration:none;padding:14px 20px;border-radius:999px;font-weight:700;margin:0 8px 8px 0">Conferma e invia</a><a href="${esc(editUrl)}" style="display:inline-block;background:#b6a06f;color:#fff;text-decoration:none;padding:14px 20px;border-radius:999px;font-weight:700">Modifica preventivo</a></p><p style="font-size:12px;color:#777">Il cliente non riceve il prezzo finché non lo approvi da uno dei pulsanti qui sopra.</p></div>`;
+
+  await resendEmail(env, {to:[env.MAIL_TO || 'paradisodinossidebooking@gmail.com'],reply_to:b.email,subject,html});
+
+  // Al cliente arriva soltanto la conferma di ricezione. Nessun prezzo viene inviato in questa fase.
+  const guestHtml = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#2b2620;line-height:1.6"><div style="text-align:center;padding:24px 0 10px"><strong style="font-family:Georgia,serif;font-size:24px;color:#b6a06f">PARADISO DI NOSSIDE</strong></div><h2 style="font-family:Georgia,serif;color:#176b5f">${li.hello(esc(b.name))}</h2><p>${li.received}</p><div style="background:#f5f0e6;padding:18px 20px;margin:22px 0;border-radius:10px"><b>${esc(apartmentNameGuest)}</b><br>Check-in: ${esc(b.checkin)}<br>Check-out: ${esc(b.checkout)}<br>${li.guests}: ${esc(String(b.guests))}</div><p><b>${li.important}</b> ${li.notice}</p><p>${li.bye},<br><b>Paradiso di Nosside</b></p></div>`;
+  await resendEmail(env, {to:[b.email],reply_to:env.MAIL_TO || 'paradisodinossidebooking@gmail.com',subject:li.subject,html:guestHtml});
+  return json({ ok: true, quoteId });
+}
+
+async function quoteAdminPage(request, env) {
+  if (!env.ADMIN_QUOTE_SECRET) return htmlResponse('<h1>Configurazione incompleta</h1><p>Manca ADMIN_QUOTE_SECRET.</p>', 500);
+  const url = new URL(request.url);
+  const token = url.searchParams.get('token') || '';
+  const mode = url.searchParams.get('mode') === 'edit' ? 'edit' : 'confirm';
+  const record = await verifyQuote(token, env.ADMIN_QUOTE_SECRET);
+  if (!record) return htmlResponse('<h1>Link non valido</h1><p>Il link del preventivo non è valido o è stato alterato.</p>', 403);
+  const p = record.pricing || {};
+  const defaultTotal = p.ok ? money(p.total) : '';
+  const details = p.breakdown?.length ? p.breakdown.join('\n') : '';
+  const editNote = mode === 'edit' ? '<p>Puoi cambiare il totale e aggiungere una nota prima dell’invio.</p>' : '<p>Controlla il riepilogo e premi il pulsante per inviare il preventivo al cliente.</p>';
+  return htmlResponse(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preventivo ${esc(record.quoteId)}</title><style>body{margin:0;background:#f5f0e6;color:#2b2620;font:16px/1.55 Arial,sans-serif}.wrap{max-width:720px;margin:40px auto;padding:20px}.card{background:#fff;border-radius:20px;padding:28px;box-shadow:0 16px 45px #0002}h1{font-family:Georgia,serif;color:#176b5f;margin-top:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}.price{font-size:30px;font-weight:700;color:#176b5f}label{display:block;font-weight:700;margin:18px 0 6px}input,textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #cfc6b5;border-radius:10px;font:inherit}button{margin-top:20px;width:100%;border:0;border-radius:999px;padding:15px;background:#176b5f;color:#fff;font-weight:700;font-size:16px;cursor:pointer}.muted{color:#70695e;font-size:14px}.break{white-space:pre-line;background:#f7f3ea;padding:14px;border-radius:10px}@media(max-width:600px){.grid{grid-template-columns:1fr}.wrap{margin:10px auto;padding:12px}}</style></head><body><div class="wrap"><div class="card"><h1>Preventivo ${esc(record.quoteId)}</h1>${editNote}<div class="grid"><div><b>Cliente</b><br>${esc(record.name)}<br>${esc(record.email)}<br>${esc(record.phone || '-')}</div><div><b>Soggiorno</b><br>${esc(record.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale')}<br>${esc(record.checkin)} → ${esc(record.checkout)}<br>${esc(String(record.guests))} ospiti · ${esc(String(p.nights || '-'))} notti</div></div>${details ? `<p class="break">${esc(details)}</p>` : ''}<form id="f"><input type="hidden" name="token" value="${esc(token)}"><label>Totale preventivo (€)</label><input name="total" inputmode="decimal" required value="${esc(defaultTotal)}" placeholder="es. 830,00"><label>Nota per il cliente (facoltativa)</label><textarea name="note" rows="4" placeholder="Es. Il prezzo include biancheria e pulizia finale."></textarea><button type="submit">${mode === 'edit' ? 'Salva e invia preventivo' : 'Conferma e invia preventivo'}</button><p id="status" class="muted"></p></form></div></div><script>document.querySelector('#f').addEventListener('submit',async e=>{e.preventDefault();const b=Object.fromEntries(new FormData(e.currentTarget));const s=document.querySelector('#status');s.textContent='Invio in corso…';try{const r=await fetch('/api/admin/send-quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});const d=await r.json();if(!r.ok)throw new Error(d.error||'Errore');document.querySelector('button').disabled=true;s.innerHTML='<b>Preventivo inviato al cliente.</b> Puoi chiudere questa pagina.'}catch(err){s.textContent=err.message||'Invio non riuscito.'}})</script></body></html>`);
+}
+
+async function sendApprovedQuote(request, env) {
+  if (!env.ADMIN_QUOTE_SECRET) return json({error:'Manca ADMIN_QUOTE_SECRET'}, 500);
+  const b = await request.json();
+  const record = await verifyQuote(String(b.token || ''), env.ADMIN_QUOTE_SECRET);
+  if (!record) return json({error:'Link del preventivo non valido.'}, 403);
+  const total = parseMoney(b.total);
+  if (!(total > 0)) return json({error:'Inserisci un totale valido.'}, 400);
+  const note = String(b.note || '').trim().slice(0, 1000);
+  const li = languageInfo(record.lang);
+  const apt = li.apt[record.apartment] || (record.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale');
+  const nights = record.pricing?.nights || nightsBetween(record.checkin, record.checkout);
+  const labels = {
+    it:{title:'Il tuo preventivo',intro:'Ecco il preventivo per il soggiorno richiesto.',nights:'Notti',total:'Totale soggiorno',note:'Nota',footer:'Per confermare o per qualsiasi domanda, rispondi direttamente a questa email.'},
+    en:{title:'Your quote',intro:'Here is the quote for your requested stay.',nights:'Nights',total:'Stay total',note:'Note',footer:'To confirm or ask any questions, simply reply to this email.'},
+    fr:{title:'Votre devis',intro:'Voici le devis pour le séjour demandé.',nights:'Nuits',total:'Total du séjour',note:'Note',footer:'Pour confirmer ou poser une question, répondez simplement à cet e-mail.'},
+    de:{title:'Ihr Angebot',intro:'Hier ist das Angebot für Ihren gewünschten Aufenthalt.',nights:'Nächte',total:'Gesamtpreis',note:'Hinweis',footer:'Zur Bestätigung oder bei Fragen antworten Sie einfach auf diese E-Mail.'}
+  }[record.lang] || null;
+  const L = labels || {title:'Il tuo preventivo',intro:'Ecco il preventivo per il soggiorno richiesto.',nights:'Notti',total:'Totale soggiorno',note:'Nota',footer:'Per confermare o per qualsiasi domanda, rispondi direttamente a questa email.'};
+  const guestHtml = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#2b2620;line-height:1.6"><div style="text-align:center;padding:24px 0 10px"><strong style="font-family:Georgia,serif;font-size:24px;color:#b6a06f">PARADISO DI NOSSIDE</strong></div><h2 style="font-family:Georgia,serif;color:#176b5f">${L.title}</h2><p>${L.intro}</p><div style="background:#f5f0e6;padding:20px;margin:22px 0;border-radius:12px"><b>${esc(apt)}</b><br>Check-in: ${esc(record.checkin)}<br>Check-out: ${esc(record.checkout)}<br>${li.guests}: ${esc(String(record.guests))}<br>${L.nights}: ${esc(String(nights))}<hr style="border:0;border-top:1px solid #d8cfbf;margin:16px 0"><span style="font-size:15px">${L.total}</span><br><strong style="font-size:28px;color:#176b5f">€${money(total)}</strong></div>${note ? `<p><b>${L.note}:</b><br>${esc(note)}</p>` : ''}<p>${L.footer}</p><p>${li.bye},<br><b>Paradiso di Nosside</b></p></div>`;
+  await resendEmail(env, {to:[record.email],reply_to:env.MAIL_TO || 'paradisodinossidebooking@gmail.com',subject:`${li.flag} ${L.title} · Paradiso di Nosside · €${money(total)}`,html:guestHtml});
+  return json({ok:true, quoteId:record.quoteId, total});
+}
+
+function calculateQuote(apartment, guests, checkin, checkout) {
+  if (!['bilocale','trilocale'].includes(apartment)) return {ok:false,error:'Appartamento non valido.'};
+  const max = apartment === 'bilocale' ? 4 : 6;
+  if (!Number.isInteger(guests) || guests < 1 || guests > max) return {ok:false,error:`Numero ospiti non valido (massimo ${max}).`};
+  const nights = nightsBetween(checkin, checkout);
+  if (!Number.isInteger(nights) || nights < 1) return {ok:false,error:'Date non valide.'};
+  const band = apartment === 'bilocale' ? (guests <= 3 ? 'low' : 'high') : (guests <= 5 ? 'low' : 'high');
+  const guestBand = apartment === 'bilocale' ? (band === 'low' ? 'tariffa 1–3 ospiti' : 'tariffa 4 ospiti') : (band === 'low' ? 'tariffa 1–5 ospiti' : 'tariffa 6 ospiti');
+  const days = [];
+  for (let i=0;i<nights;i++) {
+    const d = addDateOnlyDays(checkin, i);
+    const rule = priceRule(apartment, d);
+    if (!rule) return {ok:false,nights,guestBand,error:`Nessuna tariffa configurata per la notte del ${d}. Apri “Modifica preventivo” e inserisci il totale manualmente.`};
+    days.push({date:d, rule, nightly:rule[band].nightly, weekly:rule[band].weekly});
+  }
+  const sameRule = days.every(x => x.rule.key === days[0].rule.key);
+  let total = 0, weeklyApplied = false, breakdown=[];
+  if (sameRule && nights >= 7) {
+    const weeks = Math.floor(nights/7), rest=nights%7;
+    total = weeks*days[0].weekly + rest*days[0].nightly;
+    weeklyApplied = weeks > 0;
+    breakdown.push(`${days[0].rule.label}: ${weeks} settimana/e × €${money(days[0].weekly)}${rest ? ` + ${rest} notte/i × €${money(days[0].nightly)}` : ''}`);
+  } else {
+    const groups=[];
+    for (const x of days) { const last=groups[groups.length-1]; if(last && last.key===x.rule.key){last.count++;}else groups.push({key:x.rule.key,label:x.rule.label,count:1,nightly:x.nightly}); }
+    for (const g of groups) { total += g.count*g.nightly; breakdown.push(`${g.label}: ${g.count} notte/i × €${money(g.nightly)}`); }
+  }
+  return {ok:true,nights,guestBand,total:Number(total.toFixed(2)),weeklyApplied,breakdown};
+}
+
+function priceRule(apartment, date) {
+  const md = date.slice(5);
+  const ranges = [
+    ['05-31','06-06','31 maggio – 6 giugno',[75,500,90,600],[100,665,115,765]],
+    ['06-07','06-13','7 – 13 giugno',[80,535,95,635],[105,700,120,800]],
+    ['06-14','06-20','14 – 20 giugno',[85,565,100,665],[110,735,125,830]],
+    ['06-21','06-27','21 – 27 giugno',[90,600,105,700],[115,765,130,865]],
+    ['06-28','07-04','28 giugno – 4 luglio',[90,600,105,700],[120,800,135,900]],
+    ['07-05','07-11','5 – 11 luglio',[95,635,110,735],[125,830,140,930]],
+    ['07-12','07-18','12 – 18 luglio',[100,665,115,765],[130,865,145,965]],
+    ['07-19','07-25','19 – 25 luglio',[105,700,120,800],[135,900,150,1000]],
+    ['07-26','08-01','26 luglio – 1 agosto',[110,735,125,830],[140,930,155,1030]],
+    ['08-02','08-08','2 – 8 agosto',[115,765,130,865],[150,1000,165,1095]],
+    ['08-09','08-15','9 – 15 agosto · Ferragosto',[125,830,140,930],[170,1130,185,1230]],
+    ['08-16','08-22','16 – 22 agosto',[115,765,130,865],[155,1030,170,1130]],
+    ['08-23','08-29','23 – 29 agosto',[105,700,120,800],[140,930,155,1030]],
+    ['08-30','09-05','30 agosto – 5 settembre',[95,635,110,735],[130,865,145,965]],
+    ['09-06','09-12','6 – 12 settembre',[90,600,105,700],[120,800,135,900]],
+    ['09-13','09-19','13 – 19 settembre',[85,565,100,665],[115,765,130,865]],
+    ['09-20','09-26','20 – 26 settembre',[80,535,95,635],[105,700,120,800]],
+    ['09-27','10-03','27 settembre – 3 ottobre',[75,500,90,600],[100,665,115,765]]
+  ];
+  const row = ranges.find(r => md >= r[0] && md <= r[1]);
+  if (!row) return null;
+  const a = apartment === 'bilocale' ? row[3] : row[4];
+  return {key:row[0],label:row[2],low:{nightly:a[0],weekly:a[1]},high:{nightly:a[2],weekly:a[3]}};
+}
+
+function languageInfo(lang) {
+  return {
     it:{flag:'🇮🇹',label:'Italiano',apt:{bilocale:'Bilocale',trilocale:'Trilocale'},subject:'Abbiamo ricevuto la tua richiesta · Paradiso di Nosside',hello:n=>`Grazie ${n}, richiesta ricevuta!`,received:'Abbiamo ricevuto la tua richiesta e ti risponderemo al più presto con tutte le informazioni per il soggiorno.',guests:'Ospiti',important:'Importante:',notice:'questa email conferma soltanto la ricezione della richiesta e non costituisce una conferma di prenotazione.',bye:'A presto'},
     en:{flag:'🇬🇧',label:'English',apt:{bilocale:'One-bedroom apartment',trilocale:'Two-bedroom apartment'},subject:'We received your request · Paradiso di Nosside',hello:n=>`Thank you ${n}, request received!`,received:'We have received your request and will get back to you as soon as possible with all the information for your stay.',guests:'Guests',important:'Important:',notice:'this email only confirms receipt of your request and does not constitute a booking confirmation.',bye:'See you soon'},
     fr:{flag:'🇫🇷',label:'Français',apt:{bilocale:'Appartement 1 chambre',trilocale:'Appartement 2 chambres'},subject:'Nous avons reçu votre demande · Paradiso di Nosside',hello:n=>`Merci ${n}, demande reçue !`,received:'Nous avons bien reçu votre demande et nous vous répondrons au plus vite avec toutes les informations pour votre séjour.',guests:'Voyageurs',important:'Important :',notice:'cet e-mail confirme uniquement la réception de votre demande et ne constitue pas une confirmation de réservation.',bye:'À bientôt'},
     de:{flag:'🇩🇪',label:'Deutsch',apt:{bilocale:'Apartment mit 1 Schlafzimmer',trilocale:'Apartment mit 2 Schlafzimmern'},subject:'Wir haben Ihre Anfrage erhalten · Paradiso di Nosside',hello:n=>`Vielen Dank ${n}, Anfrage erhalten!`,received:'Wir haben Ihre Anfrage erhalten und melden uns so schnell wie möglich mit allen Informationen zu Ihrem Aufenthalt.',guests:'Gäste',important:'Wichtig:',notice:'diese E-Mail bestätigt nur den Eingang Ihrer Anfrage und stellt keine Buchungsbestätigung dar.',bye:'Bis bald'}
-  }[lang];
-  const apartmentNameIt = b.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
-  const apartmentNameGuest = langInfo.apt[b.apartment] || apartmentNameIt;
-
-  const subject = `${langInfo.flag} Richiesta preventivo ${apartmentNameIt} · ${b.checkin} → ${b.checkout}`;
-  const html = `<h2>Nuova richiesta dal sito</h2><p><b>Lingua usata sul sito:</b> ${langInfo.flag} ${esc(langInfo.label)} (${lang.toUpperCase()})</p><p><b>Appartamento:</b> ${esc(apartmentNameIt)}<br><b>Check-in:</b> ${esc(b.checkin)}<br><b>Check-out:</b> ${esc(b.checkout)}<br><b>Ospiti:</b> ${esc(String(b.guests))}</p><p><b>Nome:</b> ${esc(b.name)}<br><b>Email:</b> ${esc(b.email)}<br><b>Telefono:</b> ${esc(b.phone || '-')}</p><p><b>Messaggio:</b><br>${esc(b.message || '-')}</p>`;
-
-  await resendEmail(env, {to:[env.MAIL_TO || 'paradisodinossidebooking@gmail.com'],reply_to:b.email,subject,html});
-
-  const guestHtml = `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#2b2620;line-height:1.6"><div style="text-align:center;padding:24px 0 10px"><strong style="font-family:Georgia,serif;font-size:24px;color:#b6a06f">PARADISO DI NOSSIDE</strong></div><h2 style="font-family:Georgia,serif;color:#176b5f">${langInfo.hello(esc(b.name))}</h2><p>${langInfo.received}</p><div style="background:#f5f0e6;padding:18px 20px;margin:22px 0;border-radius:10px"><b>${esc(apartmentNameGuest)}</b><br>Check-in: ${esc(b.checkin)}<br>Check-out: ${esc(b.checkout)}<br>${langInfo.guests}: ${esc(String(b.guests))}</div><p><b>${langInfo.important}</b> ${langInfo.notice}</p><p>${langInfo.bye},<br><b>Paradiso di Nosside</b></p></div>`;
-
-  await resendEmail(env, {to:[b.email],reply_to:env.MAIL_TO || 'paradisodinossidebooking@gmail.com',subject:langInfo.subject,html:guestHtml});
-  return json({ ok: true });
+  }[normalizeLang(lang)];
 }
+function normalizeLang(v){ const x=String(v||'').toLowerCase(); return ['it','en','fr','de'].includes(x)?x:'it'; }
+function nightsBetween(a,b){ const A=Date.parse(a+'T00:00:00Z'), B=Date.parse(b+'T00:00:00Z'); return Math.round((B-A)/86400000); }
+function addDateOnlyDays(s,n){ const d=new Date(s+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function money(v){ return Number(v).toFixed(2).replace('.',','); }
+function parseMoney(v){ const n=Number(String(v||'').trim().replace(/\s/g,'').replace(',','.')); return Number.isFinite(n)?Math.round(n*100)/100:NaN; }
+function makeQuoteId(){ const d=new Date(); return `PDN-${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}${String(d.getUTCDate()).padStart(2,'0')}-${crypto.randomUUID().slice(0,6).toUpperCase()}`; }
+async function signQuote(record, secret){ const payload=utf8ToB64url(JSON.stringify(record)); const sig=await hmac(payload,secret); return `${payload}.${sig}`; }
+async function verifyQuote(token, secret){ try{ const [payload,sig]=token.split('.'); if(!payload||!sig)return null; const expected=await hmac(payload,secret); if(!safeEqual(sig,expected))return null; return JSON.parse(b64urlToUtf8(payload)); }catch{return null;} }
+async function hmac(text,secret){ const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']); const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(text)); return base64url(new Uint8Array(sig)); }
+function utf8ToB64url(s){ return base64url(new TextEncoder().encode(s)); }
+function b64urlToUtf8(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='='; const raw=atob(s); return new TextDecoder().decode(Uint8Array.from(raw,c=>c.charCodeAt(0))); }
+function safeEqual(a,b){ if(a.length!==b.length)return false; let x=0; for(let i=0;i<a.length;i++)x|=a.charCodeAt(i)^b.charCodeAt(i); return x===0; }
+function htmlResponse(body,status=200){ return new Response(body,{status,headers:{'content-type':'text/html;charset=UTF-8','cache-control':'no-store','x-frame-options':'DENY','referrer-policy':'no-referrer'}}); }
 
 async function resendEmail(env, message) {
   const r = await fetch('https://api.resend.com/emails', {
