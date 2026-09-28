@@ -81,8 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const payload = Object.fromEntries(new FormData(quoteForm).entries());
       payload.lang = window.NOSSIDE_LANG || document.documentElement.lang || 'it';
       const r = await fetch('/api/quote', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload) });
+      const contentType = r.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const raw = await r.text();
+        console.error('Risposta non JSON da /api/quote:', r.status, raw.slice(0, 500));
+        throw new Error('Il server non ha raggiunto la funzione preventivo. Verifica il deploy del Worker e wrangler.jsonc.');
+      }
       const data = await r.json();
-      if (!r.ok) throw new Error(data.error || 'Invio non riuscito.');
+      if (!r.ok) throw new Error(data.error || data.debug || 'Invio non riuscito.');
       setStatus(quoteResult, '', '');
       openSuccessModal();
       quoteForm.querySelectorAll('input:not([type=hidden]), textarea').forEach(el => { if (el.type === 'checkbox') el.checked = false; else el.value = ''; });
