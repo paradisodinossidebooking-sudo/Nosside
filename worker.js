@@ -34,10 +34,10 @@ export default {
 
     try {
       if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, worker: 'nosside-v3' });
-      if (url.pathname === '/api/availability' && request.method === 'GET') return checkAvailability(request, env);
-      if (url.pathname === '/api/quote' && request.method === 'POST') return sendQuote(request, env);
-      if (url.pathname === '/admin/quote' && request.method === 'GET') return quoteAdminPage(request, env);
-      if (url.pathname === '/api/admin/send-quote' && request.method === 'POST') return sendApprovedQuote(request, env);
+      if (url.pathname === '/api/availability' && request.method === 'GET') return await checkAvailability(request, env);
+      if (url.pathname === '/api/quote' && request.method === 'POST') return await sendQuote(request, env);
+      if (url.pathname === '/admin/quote' && request.method === 'GET') return await quoteAdminPage(request, env);
+      if (url.pathname === '/api/admin/send-quote' && request.method === 'POST') return await sendApprovedQuote(request, env);
       return env.ASSETS.fetch(request);
     } catch (error) {
       console.error('WORKER ERROR:', error);
