@@ -911,3 +911,37 @@ body{background:var(--warm)}
 .language-picker .flag-emoji{display:inline-block;font-size:1.25rem;line-height:1;vertical-align:middle}
 .language-picker button{gap:6px}
 @media(max-width:760px){.language-picker .flag-emoji{font-size:1.35rem}.language-picker button{padding:6px}}
+
+/* Language dropdown */
+.language-picker.language-dropdown{position:relative;display:inline-block;padding:0;background:transparent;border:0;backdrop-filter:none}
+.language-dropdown-toggle{display:flex!important;align-items:center;gap:7px!important;border:1px solid rgba(255,255,255,.42)!important;background:rgba(255,255,255,.09)!important;color:#fff!important;border-radius:999px!important;padding:8px 11px!important;opacity:1!important}
+.language-dropdown-toggle .current-flag{font-size:1.25rem}.language-arrow{transition:transform .2s}.language-dropdown.open .language-arrow{transform:rotate(180deg)}
+.language-dropdown-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);min-width:165px;padding:6px;background:#fff;border:1px solid #e5ddcf;border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.18);z-index:2000}
+.language-dropdown.open .language-dropdown-menu{display:block}
+.language-picker .language-dropdown-menu button{display:flex!important;width:100%;align-items:center;gap:10px;color:#2b2620!important;background:transparent!important;border:0;border-radius:9px;padding:10px 12px!important;font-size:.85rem!important;opacity:1!important;text-align:left}
+.language-picker .language-dropdown-menu button:hover,.language-picker .language-dropdown-menu button.is-active{background:#f3eee4!important;color:#176b5f!important}
+@media(max-width:760px){.language-picker .language-dropdown-toggle span{display:inline}.language-dropdown-menu{right:0}.language-picker .language-dropdown-menu button span{display:inline}}
+
+/* Language selector stile compatto con bandiera circolare */
+.language-picker.language-dropdown{position:relative;display:inline-flex!important;align-items:center;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+.language-picker .language-dropdown-toggle{width:48px!important;height:48px!important;min-width:48px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;border:1px solid rgba(0,0,0,.05)!important;border-radius:50%!important;background:#fff!important;color:#222!important;box-shadow:0 7px 22px rgba(0,0,0,.12)!important}
+.language-dropdown-toggle .current-flag{font-size:1.35rem!important;line-height:1!important}
+.language-dropdown-menu{display:none;position:absolute!important;top:calc(100% + 7px)!important;left:50%!important;right:auto!important;transform:translateX(-50%);min-width:92px!important;padding:5px 6px!important;background:#fff!important;border:0!important;border-radius:0 0 13px 13px!important;box-shadow:0 10px 24px rgba(0,0,0,.12)!important;z-index:2000!important}
+.language-dropdown.open .language-dropdown-menu{display:block!important}
+.language-picker .language-dropdown-menu button{width:100%!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;padding:8px 9px!important;border:0!important;border-radius:9px!important;background:#fff!important;color:#27314b!important;font:700 .88rem/1 Arial,sans-serif!important;text-transform:lowercase!important;cursor:pointer!important}
+.language-picker .language-dropdown-menu button:hover,.language-picker .language-dropdown-menu button.is-active{background:#f5f6f7!important;color:#176b5f!important}
+.flag-round{width:25px;height:25px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 25px;border-radius:50%;overflow:hidden;background:#fff;font-size:1.18rem;line-height:1;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.lang-code{display:inline!important}
+@media(max-width:760px){.language-picker .language-dropdown-toggle{width:44px!important;height:44px!important;min-width:44px!important}.language-dropdown-menu{min-width:88px!important}}
+
+/* bandiere reali: niente emoji/sigle dentro il cerchio */
+.current-flag-img{width:27px!important;height:27px!important;border-radius:50%!important;object-fit:cover!important;display:block!important}
+.language-picker .language-dropdown-menu{width:92px!important;min-width:92px!important;padding:4px!important;border-radius:0 0 9px 9px!important}
+.language-picker .language-dropdown-menu button{gap:8px!important;padding:7px 8px!important;background:#fff!important}
+.language-picker .language-dropdown-menu button img{width:25px!important;height:25px!important;border-radius:50%!important;object-fit:cover!important;flex:0 0 25px!important;box-shadow:0 0 0 1px rgba(0,0,0,.08)!important}
+.language-picker .language-dropdown-menu button.is-active{display:none!important}
+
+/* Language dropdown: solo bandiere */
+.language-picker .language-dropdown-menu{width:48px!important;min-width:48px!important;padding:5px!important}
+.language-picker .language-dropdown-menu button{width:38px!important;height:38px!important;padding:6px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:0!important}
+.language-picker .language-dropdown-menu button img{margin:0!important}
