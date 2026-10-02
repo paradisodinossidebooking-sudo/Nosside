@@ -949,3 +949,27 @@ body{background:var(--warm)}
 /* CTA mobile sticky */
 .mobile-sticky-book{display:none}
 @media(max-width:760px){body{padding-bottom:76px}.mobile-sticky-book{display:flex;position:fixed;left:14px;right:14px;bottom:12px;z-index:1900;align-items:center;justify-content:center;gap:10px;border:1px solid rgba(255,255,255,.8);border-radius:999px;padding:15px 20px;background:#b6a06f;color:#fff;font:700 15px/1 'IBM Plex Sans',Arial,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.2);cursor:pointer}}
+
+/* Popup conferma richiesta: logo più discreto */
+.request-success-logo{width:min(178px,48%)!important;margin-bottom:20px!important}
+@media(max-width:600px){.request-success-logo{width:min(164px,52%)!important}}
+
+/* === Mobile UX fix === */
+@media(max-width:760px){
+ body{font-size:16px;line-height:1.62}
+ .hero-premium-content p,.section-intro,.apartment-card p,.service-card p,.territory-card p,.review-card p,.host-copy p,.contact-copy p{font-size:15.5px!important;line-height:1.62!important;color:#39342e!important}
+ .eyebrow{font-size:12px!important;letter-spacing:.11em}
+ h1{line-height:1.06!important} h2{line-height:1.13!important} h3{line-height:1.22!important}
+ .mobile-sticky-book{display:flex!important;z-index:90!important;min-height:52px;bottom:max(10px,env(safe-area-inset-bottom));touch-action:manipulation}
+ body.booking-popup-open .mobile-sticky-book{display:none!important}
+ .booking-modal{padding:8px!important;place-items:end center!important}
+ .booking-dialog{width:100%!important;max-width:none!important;max-height:calc(100dvh - 16px)!important;overflow:auto!important;border-radius:18px 18px 12px 12px!important}
+ .request-success-modal{padding:16px!important}
+ .request-success-dialog{width:min(390px,92vw)!important;padding:22px 20px 20px!important;border-radius:18px!important;max-height:88dvh!important;overflow:auto!important}
+ .request-success-logo{width:min(132px,40%)!important;margin:0 auto 12px!important}
+ .request-success-check{width:52px!important;height:52px!important;margin:0 auto 12px!important;font-size:29px!important}
+ .request-success-dialog h2{font-size:1.48rem!important;margin:.2rem 0 .5rem!important}
+ .request-success-dialog p{font-size:14px!important;line-height:1.48!important;margin:.4rem 0!important}
+ .request-success-divider{margin:12px auto!important}
+ .request-success-close{top:9px!important;right:9px!important;width:34px!important;height:34px!important}
+}

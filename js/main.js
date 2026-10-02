@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $$('[data-open-booking]').forEach(btn => btn.addEventListener('click', openModal));
   $$('[data-close-booking]').forEach(btn => btn.addEventListener('click', closeModal));
+const mobileStickyBook = document.querySelector('.mobile-sticky-book');
+if (mobileStickyBook) mobileStickyBook.addEventListener('click', (event) => {
+  event.preventDefault();
+  if (!modal.classList.contains('is-open')) openModal();
+});
   $$('.booking-apartment-card').forEach(btn => btn.addEventListener('click', () => selectApartment(btn.dataset.apartment)));
   $('#booking-back').addEventListener('click', resetToApartments);
 
@@ -125,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openModal() {
+  document.body.classList.add('booking-popup-open');
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
@@ -132,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeModal() {
+  document.body.classList.remove('booking-popup-open');
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
@@ -364,9 +371,8 @@ function dateIsBusy(date, busy) {
   return busy.some(period => date >= period.start && date < period.end);
 }
 function rangeTouchesBusy(start, end, busy) {
-  // Gli intervalli ricevuti dal Worker hanno `end` esclusivo ma includono
-  // già il giorno finale occupato. Stessa regola usata dalla preview.
-  return busy.some(period => start < period.end && end >= period.start);
+  // Intervalli [check-in, check-out): il checkout resta disponibile.
+  return busy.some(period => start < period.end && end > period.start);
 }
 function localISO(date) {
   const y = date.getFullYear();
