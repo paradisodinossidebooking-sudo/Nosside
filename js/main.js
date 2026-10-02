@@ -462,3 +462,15 @@ function setStatus(el, msg, type) {
   window.addEventListener('resize', render);
   render();
 })();
+
+
+// Mobile: mostra/nasconde i servizi aggiuntivi nelle card appartamento
+document.querySelectorAll('.services-mobile-toggle').forEach((button) => {
+  button.addEventListener('click', () => {
+    const grid = button.previousElementSibling;
+    if (!grid || !grid.classList.contains('amenities-grid')) return;
+    const expanded = grid.classList.toggle('is-expanded');
+    button.setAttribute('aria-expanded', String(expanded));
+    button.childNodes[0].nodeValue = expanded ? 'Meno servizi ' : 'Altri servizi ';
+  });
+});
