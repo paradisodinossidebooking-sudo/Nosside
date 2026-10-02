@@ -173,6 +173,49 @@ async function sendQuote(request, env) {
   return json({ok:true, quoteId:record.quoteId, total: pricing.ok ? pricing.total : null});
 }
 
+async function quoteAdminPage(request, env) {
+  if (!env.ADMIN_QUOTE_SECRET) return htmlResponse('<h1>Configurazione incompleta</h1><p>Manca ADMIN_QUOTE_SECRET.</p>', 500);
+  const url = new URL(request.url);
+  const token = url.searchParams.get('token') || '';
+  const mode = url.searchParams.get('mode') === 'edit' ? 'edit' : 'confirm';
+  const record = await verifyQuote(token, env.ADMIN_QUOTE_SECRET);
+  if (!record) return htmlResponse('<h1>Link non valido</h1><p>Il link del preventivo non è valido o è stato alterato.</p>', 403);
+  const proposed = record.pricing?.ok && Number.isFinite(Number(record.pricing.total)) ? Number(record.pricing.total) : '';
+  const nights = Number.isFinite(Number(record.pricing?.nights)) && Number(record.pricing.nights) > 0 ? Number(record.pricing.nights) : nightsBetween(record.checkin, record.checkout);
+  const apt = record.apartment === 'trilocale' ? 'Trilocale' : 'Bilocale';
+  const details = record.pricing?.ok ? (record.pricing.breakdown || []).map(x => typeof x === 'string' ? x : `${x.label || ''}: ${Number.isFinite(Number(x.nights)) ? Number(x.nights) : nights} notti${Number.isFinite(Number(x.amount)) ? ` · €${money(x.amount)}` : ''}`).join('<br>') : esc(record.pricing?.error || 'Prezzo da impostare manualmente');
+  return htmlResponse(`<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preventivo ${esc(record.quoteId)}</title><style>body{margin:0;background:#f5f0e6;color:#2b2620;font:16px/1.55 Arial,sans-serif}.wrap{max-width:680px;margin:38px auto;padding:18px}.card{background:#fff;border-radius:20px;padding:30px;box-shadow:0 16px 45px #0002}h1{font-family:Georgia,serif;color:#176b5f}.summary{background:#f7f3ea;border-radius:14px;padding:18px;margin:20px 0}label{display:block;font-weight:700;margin:16px 0 6px}input,textarea{box-sizing:border-box;width:100%;padding:13px;border:1px solid #d8d0c2;border-radius:10px;font:inherit}textarea{min-height:100px;resize:vertical}button{width:100%;margin-top:22px;border:0;border-radius:999px;padding:15px;background:#176b5f;color:#fff;font-weight:700;font-size:16px;cursor:pointer}.muted{font-size:13px;color:#746d63}.ok{padding:18px;background:#edf7f3;border-radius:12px;color:#176b5f;font-weight:700}</style></head><body><div class="wrap"><div class="card"><h1>${mode==='edit'?'Modifica preventivo':'Conferma preventivo'}</h1><div class="summary"><b>${esc(record.quoteId)} · ${esc(apt)}</b><br>${esc(record.checkin)} → ${esc(record.checkout)} · ${nights} notti<br>${esc(String(record.guests))} ospiti<br><br>${details}</div><label for="total">Totale da inviare (€)</label><input id="total" inputmode="decimal" value="${proposed === '' ? '' : esc(String(proposed).replace('.',','))}" ${mode==='confirm' && proposed!=='' ? 'readonly' : ''}><label for="note">Nota personale al cliente (facoltativa)</label><textarea id="note" placeholder="Eventuale messaggio da aggiungere al preventivo"></textarea><p class="muted">Il preventivo scadrà automaticamente 7 giorni dopo l'invio. Al momento dell'accettazione verrà ricontrollata la disponibilità sul calendario.</p><button id="send">${mode==='edit'?'Salva e invia preventivo':'Conferma e invia preventivo'}</button><div id="msg"></div></div></div><script>const b=document.querySelector('#send'),m=document.querySelector('#msg');b.onclick=async()=>{b.disabled=true;m.textContent='Invio in corso…';try{const r=await fetch('/api/admin/send-quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:${JSON.stringify(token)},total:document.querySelector('#total').value,note:document.querySelector('#note').value})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Errore');m.innerHTML='<p class="ok">Preventivo inviato ✓<br><span style="font-weight:400">Il preventivo è stato inviato correttamente al cliente.</span></p>';b.style.display='none'}catch(e){m.textContent=e.message;b.disabled=false}}</script></body></html>`);
+}
+
+async function sendApprovedQuote(request, env) {
+  if (!env.ADMIN_QUOTE_SECRET) return json({error:'Manca ADMIN_QUOTE_SECRET'},500);
+  if (!env.RESEND_API_KEY) return json({error:'Manca RESEND_API_KEY'},500);
+  if (!env.MAIL_FROM) return json({error:'Manca MAIL_FROM'},500);
+  const b = await request.json();
+  const record = await verifyQuote(String(b.token || ''), env.ADMIN_QUOTE_SECRET);
+  if (!record) return json({error:'Link del preventivo non valido.'},403);
+  const total = parseMoney(b.total);
+  if (!(total > 0)) return json({error:'Inserisci un totale valido.'},400);
+  const approvedAt = new Date();
+  const approved = {...record, approvedTotal:total, approvedNote:String(b.note || '').trim(), approvedAt:approvedAt.toISOString(), expiresAt:new Date(approvedAt.getTime()+7*86400000).toISOString()};
+  const customerToken = await signQuote(approved, env.ADMIN_QUOTE_SECRET);
+  const origin = new URL(request.url).origin;
+  const acceptUrl = `${origin}/quote/accept?token=${encodeURIComponent(customerToken)}`;
+  const li = languageInfo(approved.lang);
+  const apt = li.apt[approved.apartment] || approved.apartment;
+  const nights = Number.isFinite(Number(approved.pricing?.nights)) && Number(approved.pricing.nights)>0 ? Number(approved.pricing.nights) : nightsBetween(approved.checkin, approved.checkout);
+  const waUrl = `https://wa.me/393276632856?text=${encodeURIComponent(whatsappQuoteText(approved.lang,{quoteId:approved.quoteId,apartment:apt,checkin:approved.checkin,checkout:approved.checkout,guests:approved.guests,nights,total}))}`;
+  const T={
+    it:{subject:'Il tuo preventivo · Paradiso di Nosside',title:'Il tuo preventivo',intro:'Abbiamo preparato il preventivo per il tuo soggiorno.',stay:'Riepilogo soggiorno',nights:'Notti',total:'Totale',note:'Nota',accept:'Accetta il preventivo',wa:'Scrivici su WhatsApp',expiry:'Questo preventivo è valido per 7 giorni dalla data di invio. Prima dell’accettazione controlleremo nuovamente la disponibilità.'},
+    en:{subject:'Your quote · Paradiso di Nosside',title:'Your quote',intro:'We have prepared the quote for your stay.',stay:'Stay summary',nights:'Nights',total:'Total',note:'Note',accept:'Accept quote',wa:'Message us on WhatsApp',expiry:'This quote is valid for 7 days from the date it was sent. Availability will be checked again before acceptance.'},
+    fr:{subject:'Votre devis · Paradiso di Nosside',title:'Votre devis',intro:'Nous avons préparé le devis pour votre séjour.',stay:'Résumé du séjour',nights:'Nuits',total:'Total',note:'Note',accept:'Accepter le devis',wa:'Écrivez-nous sur WhatsApp',expiry:'Ce devis est valable 7 jours à compter de son envoi. Les disponibilités seront vérifiées à nouveau avant acceptation.'},
+    de:{subject:'Ihr Angebot · Paradiso di Nosside',title:'Ihr Angebot',intro:'Wir haben das Angebot für Ihren Aufenthalt vorbereitet.',stay:'Aufenthaltsübersicht',nights:'Nächte',total:'Gesamt',note:'Hinweis',accept:'Angebot annehmen',wa:'Schreiben Sie uns auf WhatsApp',expiry:'Dieses Angebot ist ab Versand 7 Tage gültig. Vor der Annahme wird die Verfügbarkeit erneut geprüft.'}
+  }[normalizeLang(approved.lang)];
+  const html=`<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#2b2620;line-height:1.6;background:#fff"><div style="background:#173f38;color:#fff;padding:30px;text-align:center"><div style="font-family:Georgia,serif;font-size:27px;letter-spacing:.5px">PARADISO DI NOSSIDE</div><div style="opacity:.85;margin-top:5px">Locri · Calabria</div></div><div style="padding:30px"><h1 style="font-family:Georgia,serif;color:#176b5f;margin-top:0">${esc(T.title)}</h1><p>${esc(T.intro)}</p><div style="background:#f7f3ea;border-radius:16px;padding:22px;margin:22px 0"><div style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#756d60">${esc(T.stay)}</div><h2 style="margin:5px 0 12px;color:#2b2620">${esc(apt)}</h2><div>Check-in: <b>${esc(approved.checkin)}</b></div><div>Check-out: <b>${esc(approved.checkout)}</b></div><div>${esc(li.guests)}: <b>${esc(String(approved.guests))}</b></div><div>${esc(T.nights)}: <b>${esc(String(nights))}</b></div><hr style="border:0;border-top:1px solid #ded6c8;margin:18px 0"><div style="font-size:13px;color:#756d60">${esc(T.total)}</div><div style="font-family:Georgia,serif;font-size:34px;color:#176b5f;font-weight:700">€${money(total)}</div>${approved.approvedNote?`<div style="margin-top:16px"><b>${esc(T.note)}:</b><br>${esc(approved.approvedNote)}</div>`:''}</div><div style="text-align:center;margin:26px 0"><a href="${esc(acceptUrl)}" style="display:inline-block;background:#176b5f;color:#fff;text-decoration:none;padding:15px 24px;border-radius:999px;font-weight:700;margin:0 6px 10px">${esc(T.accept)}</a><a href="${esc(waUrl)}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:15px 24px;border-radius:999px;font-weight:700;margin:0 6px 10px">${esc(T.wa)}</a></div><p style="font-size:13px;color:#746d63;text-align:center">${esc(T.expiry)}</p></div></div>`;
+  await resendEmail(env,{to:[approved.email],reply_to:env.MAIL_TO || 'paradisodinossidebooking@gmail.com',subject:T.subject,html});
+  return json({ok:true,quoteId:approved.quoteId,expiresAt:approved.expiresAt});
+}
+
 async function quoteAcceptPage(request, env) {
   if (!env.ADMIN_QUOTE_SECRET) return htmlResponse('<h1>Configurazione incompleta</h1>', 500);
   const url = new URL(request.url);
