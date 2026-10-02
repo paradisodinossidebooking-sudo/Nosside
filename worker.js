@@ -70,7 +70,7 @@ async function checkAvailability(request, env) {
       apartment,
       rangeStart: dateOnly(start),
       rangeEnd: dateOnly(end),
-      busy: busy.map(period => ({ start: instantToRomeDate(period.start), end: instantToRomeDateInclusiveEnd(period.end) }))
+      busy: busy.map(period => ({ start: instantToRomeDate(period.start), end: instantToRomeDate(period.end) }))
     });
   }
 
@@ -80,10 +80,8 @@ async function checkAvailability(request, env) {
 
   // Mezzanotte locale Europe/Rome convertita in UTC con Intl, evitando offset +01/+02 hard-coded.
   const timeMin = romeMidnightToUTC(checkin);
-  // Il checkout viene trattato come giorno occupato anche nella verifica finale,
-  // così preview e controllo disponibilità usano esattamente la stessa regola.
-  const checkoutNext = addRomeDays(checkout, 1);
-  const timeMax = romeMidnightToUTC(checkoutNext);
+  // Intervallo [check-in, check-out): il giorno di check-out resta libero.
+  const timeMax = romeMidnightToUTC(checkout);
   const busy = await googleBusy(calendarId, token, timeMin, timeMax);
   return json({ available: busy.length === 0 });
 }
@@ -211,7 +209,7 @@ async function sendApprovedQuote(request, env) {
     fr:{subject:'Votre devis · Paradiso di Nosside',title:'Votre devis',intro:'Nous avons préparé le devis pour votre séjour.',stay:'Résumé du séjour',nights:'Nuits',total:'Total',note:'Note',accept:'Accepter le devis',wa:'Écrivez-nous sur WhatsApp',expiry:'Ce devis est valable 7 jours à compter de son envoi. Les disponibilités seront vérifiées à nouveau avant acceptation.'},
     de:{subject:'Ihr Angebot · Paradiso di Nosside',title:'Ihr Angebot',intro:'Wir haben das Angebot für Ihren Aufenthalt vorbereitet.',stay:'Aufenthaltsübersicht',nights:'Nächte',total:'Gesamt',note:'Hinweis',accept:'Angebot annehmen',wa:'Schreiben Sie uns auf WhatsApp',expiry:'Dieses Angebot ist ab Versand 7 Tage gültig. Vor der Annahme wird die Verfügbarkeit erneut geprüft.'}
   }[normalizeLang(approved.lang)];
-  const html=`<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#2b2620;line-height:1.6;background:#fff"><div style="background:#173f38;color:#fff;padding:30px;text-align:center"><div style="font-family:Georgia,serif;font-size:27px;letter-spacing:.5px">PARADISO DI NOSSIDE</div><div style="opacity:.85;margin-top:5px">Locri · Calabria</div></div><div style="padding:30px"><h1 style="font-family:Georgia,serif;color:#176b5f;margin-top:0">${esc(T.title)}</h1><p>${esc(T.intro)}</p><div style="background:#f7f3ea;border-radius:16px;padding:22px;margin:22px 0"><div style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#756d60">${esc(T.stay)}</div><h2 style="margin:5px 0 12px;color:#2b2620">${esc(apt)}</h2><div>Check-in: <b>${esc(approved.checkin)}</b></div><div>Check-out: <b>${esc(approved.checkout)}</b></div><div>${esc(li.guests)}: <b>${esc(String(approved.guests))}</b></div><div>${esc(T.nights)}: <b>${esc(String(nights))}</b></div><hr style="border:0;border-top:1px solid #ded6c8;margin:18px 0"><div style="font-size:13px;color:#756d60">${esc(T.total)}</div><div style="font-family:Georgia,serif;font-size:34px;color:#176b5f;font-weight:700">€${money(total)}</div>${approved.approvedNote?`<div style="margin-top:16px"><b>${esc(T.note)}:</b><br>${esc(approved.approvedNote)}</div>`:''}</div><div style="text-align:center;margin:26px 0"><a href="${esc(acceptUrl)}" style="display:inline-block;background:#176b5f;color:#fff;text-decoration:none;padding:15px 24px;border-radius:999px;font-weight:700;margin:0 6px 10px">${esc(T.accept)}</a><a href="${esc(waUrl)}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:15px 24px;border-radius:999px;font-weight:700;margin:0 6px 10px">${esc(T.wa)}</a></div><p style="font-size:13px;color:#746d63;text-align:center">${esc(T.expiry)}</p></div></div>`;
+  const html=`<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;color:#2b2620;line-height:1.6;background:#fff"><div style="background:#f7f3ea;padding:22px;text-align:center"><img src="${esc(origin + '/images/logo_banner.png')}" alt="Paradiso di Nosside" style="display:block;width:180px;max-width:58%;height:auto;margin:auto"><div style="color:#756d60;font-size:12px;letter-spacing:.08em;margin-top:8px">LOCRI · CALABRIA</div></div><div style="padding:30px"><h1 style="font-family:Georgia,serif;color:#176b5f;margin-top:0">${esc(T.title)}</h1><p>${esc(T.intro)}</p><div style="background:#f7f3ea;border-radius:16px;padding:22px;margin:22px 0"><div style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#756d60">${esc(T.stay)}</div><h2 style="margin:5px 0 12px;color:#2b2620">${esc(apt)}</h2><div>Check-in: <b>${esc(approved.checkin)}</b></div><div>Check-out: <b>${esc(approved.checkout)}</b></div><div>${esc(li.guests)}: <b>${esc(String(approved.guests))}</b></div><div>${esc(T.nights)}: <b>${esc(String(nights))}</b></div><hr style="border:0;border-top:1px solid #ded6c8;margin:18px 0"><div style="font-size:13px;color:#756d60">${esc(T.total)}</div><div style="font-family:Georgia,serif;font-size:34px;color:#176b5f;font-weight:700">€${money(total)}</div>${approved.approvedNote?`<div style="margin-top:16px"><b>${esc(T.note)}:</b><br>${esc(approved.approvedNote)}</div>`:''}</div><div style="text-align:center;margin:26px 0"><a href="${esc(acceptUrl)}" style="display:inline-block;background:#176b5f;color:#fff;text-decoration:none;padding:15px 24px;border-radius:999px;font-weight:700;margin:0 6px 10px">${esc(T.accept)}</a><a href="${esc(waUrl)}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:15px 24px;border-radius:999px;font-weight:700;margin:0 6px 10px">${esc(T.wa)}</a></div><p style="font-size:13px;color:#746d63;text-align:center">${esc(T.expiry)}</p></div></div>`;
   await resendEmail(env,{to:[approved.email],reply_to:env.MAIL_TO || 'paradisodinossidebooking@gmail.com',subject:T.subject,html});
   return json({ok:true,quoteId:approved.quoteId,expiresAt:approved.expiresAt});
 }
@@ -283,8 +281,9 @@ async function blockCalendar(request,env){
   const calendarId=r.apartment==='bilocale'?env.GOOGLE_CALENDAR_ID_BILOCALE:env.GOOGLE_CALENDAR_ID_TRILOCALE; if(!calendarId)return json({error:'Calendar ID non configurato'},500); const gt=await googleToken(env);
   const busy=await googleBusy(calendarId,gt,romeMidnightToUTC(r.checkin),romeMidnightToUTC(r.checkout)); if(busy.length)return json({error:'Le date risultano già occupate nel calendario.'},409);
   const ev=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,{method:'POST',headers:{Authorization:`Bearer ${gt}`,'content-type':'application/json'},body:JSON.stringify({summary:`Reserved · ${r.name} · ${r.quoteId}`,description:`Prenotazione confermata dal sito\nCliente: ${r.name}\nEmail: ${r.email}\nTelefono: ${r.phone||'-'}\nOspiti: ${r.guests}\nTotale: €${money(r.approvedTotal)}`,start:{date:r.checkin},end:{date:r.checkout}})}); if(!ev.ok){console.error('GOOGLE EVENT ERROR',await ev.text());return json({error:'Non sono riuscito a bloccare il calendario.'},500);}
+  const origin=new URL(request.url).origin;
   const li=languageInfo(r.lang), apt=li.apt[r.apartment]||r.apartment; const tx={it:{title:'Prenotazione confermata',p:'La tua prenotazione è confermata. Le date sono state riservate per te.'},en:{title:'Booking confirmed',p:'Your booking is confirmed. The dates have been reserved for you.'},fr:{title:'Réservation confirmée',p:'Votre réservation est confirmée. Les dates ont été réservées pour vous.'},de:{title:'Buchung bestätigt',p:'Ihre Buchung ist bestätigt. Die Termine wurden für Sie reserviert.'}}[normalizeLang(r.lang)];
-  const html=`<div style="font-family:Arial;max-width:620px;margin:auto;color:#2b2620;line-height:1.6"><div style="background:#173f38;color:#fff;padding:28px;text-align:center"><b style="font-family:Georgia;font-size:25px">PARADISO DI NOSSIDE</b></div><div style="padding:28px"><h2 style="font-family:Georgia;color:#176b5f">${tx.title} ✓</h2><p>${tx.p}</p><div style="background:#f7f3ea;padding:20px;border-radius:14px"><b>${esc(apt)}</b><br>Check-in: ${esc(r.checkin)}<br>Check-out: ${esc(r.checkout)}<br>${li.guests}: ${esc(String(r.guests))}<br><b>€${money(r.approvedTotal)}</b></div><p>${li.bye},<br><b>Paradiso di Nosside</b></p></div></div>`; await resendEmail(env,{to:[r.email],reply_to:env.MAIL_TO||'paradisodinossidebooking@gmail.com',subject:`✅ ${tx.title} · Paradiso di Nosside`,html}); return json({ok:true});
+  const html=`<div style="font-family:Arial;max-width:620px;margin:auto;color:#2b2620;line-height:1.6"><div style="background:#f7f3ea;padding:22px;text-align:center"><img src="${esc(origin + '/images/logo_banner.png')}" alt="Paradiso di Nosside" style="display:block;width:175px;max-width:58%;height:auto;margin:auto"></div><div style="padding:28px"><h2 style="font-family:Georgia;color:#176b5f">${tx.title} ✓</h2><p>${tx.p}</p><div style="background:#f7f3ea;padding:20px;border-radius:14px"><b>${esc(apt)}</b><br>Check-in: ${esc(r.checkin)}<br>Check-out: ${esc(r.checkout)}<br>${li.guests}: ${esc(String(r.guests))}<br><b>€${money(r.approvedTotal)}</b></div><p>${li.bye},<br><b>Paradiso di Nosside</b></p></div></div>`; await resendEmail(env,{to:[r.email],reply_to:env.MAIL_TO||'paradisodinossidebooking@gmail.com',subject:`✅ ${tx.title} · Paradiso di Nosside`,html}); return json({ok:true});
 }
 
 function whatsappPhone(value) {
@@ -416,15 +415,6 @@ async function googleToken(env) {
 function startOfToday() { const n=new Date(); return romeMidnightToUTC(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(n)); }
 function dateOnly(d) { return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); }
 function instantToRomeDate(s) { return dateOnly(new Date(s)); }
-function instantToRomeDateInclusiveEnd(s) {
-  const d = new Date(s);
-  const localDate = dateOnly(d);
-  const midnight = romeMidnightToUTC(localDate);
-  // Google Calendar usa una fine esclusiva per gli eventi all-day.
-  // Per la preview del sito consideriamo invece occupato anche il giorno finale.
-  if (Math.abs(d.getTime() - midnight.getTime()) < 60000) return addRomeDays(localDate, 1);
-  return addRomeDays(localDate, 1);
-}
 function addRomeDays(ymd, days) {
   const [y,m,d] = ymd.split('-').map(Number);
   const x = new Date(Date.UTC(y,m-1,d));
